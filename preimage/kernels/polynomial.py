@@ -1,6 +1,6 @@
 __author__ = 'amelie'
 
-import numpy
+import numpy as np
 from sklearn.base import BaseEstimator
 
 
@@ -37,9 +37,9 @@ class PolynomialKernel(BaseEstimator):
             Similarity of each vector of X1 with each vector of X2, where n_samples_x1 is the number of samples in X1
             and n_samples_x2 is the number of samples in X2.
         """
-        X_one = numpy.array(X_one)
-        X_two = numpy.array(X_two)
-        gram_matrix = (numpy.dot(X_one, X_two.T) + self.bias) ** self.degree
+        X_one = np.array(X_one)
+        X_two = np.array(X_two)
+        gram_matrix = (np.dot(X_one, X_two.T) + self.bias) ** self.degree
         if self.is_normalized:
             gram_matrix = self._normalize_gram_matrix(X_one, X_two, gram_matrix)
         return gram_matrix
@@ -47,7 +47,7 @@ class PolynomialKernel(BaseEstimator):
     def _normalize_gram_matrix(self, X_one, X_two, gram_matrix):
         x_one_diagonal = self._compute_element_wise_similarity(X_one)
         x_two_diagonal = self._compute_element_wise_similarity(X_two)
-        gram_matrix = ((gram_matrix / numpy.sqrt(x_one_diagonal)).T / numpy.sqrt(x_two_diagonal)).T
+        gram_matrix = ((gram_matrix / np.sqrt(x_one_diagonal)).T / np.sqrt(x_two_diagonal)).T
         return gram_matrix
 
     def _compute_element_wise_similarity(self, X):

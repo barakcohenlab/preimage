@@ -3,7 +3,7 @@ __author__ = 'amelie'
 from math import sqrt
 
 import unittest2
-import numpy.testing
+import numpy as np.testing
 from mock import patch
 from scipy.sparse import csr_matrix
 
@@ -30,8 +30,8 @@ class TestWeightedDegreeFeatureSpace(unittest2.TestCase):
                                                             [1., 0, 0, 1., 1., 0, 1., 0, 1., 0]])
         self.feature_space_two_gram_abb_abaaa = csr_matrix([[0, 1., 0, 0, 0, 0, 0, 1., 0, 0, 0, 0, 0, 0, 0, 0],
                                                             [0, 1., 0, 0, 0, 0, 1., 0, 1., 0, 0, 0, 1., 0, 0, 0]])
-        self.feature_space_normalized_one_gram_abb = numpy.array([[1. / sqrt(3), 0, 0, 1. / sqrt(3), 0, 1. / sqrt(3)]])
-        self.feature_space_normalized_two_gram_abb = numpy.array([[0, 1. / sqrt(2), 0, 0, 0, 0, 0, 1. / sqrt(2)]])
+        self.feature_space_normalized_one_gram_abb = np.array([[1. / sqrt(3), 0, 0, 1. / sqrt(3), 0, 1. / sqrt(3)]])
+        self.feature_space_normalized_two_gram_abb = np.array([[0, 1. / sqrt(2), 0, 0, 0, 0, 0, 1. / sqrt(2)]])
         self.feature_space_normalized_one_gram_abb_abaaa = \
             [[1. / sqrt(3), 0, 0, 1. / sqrt(3), 0, 1. / sqrt(3), 0, 0, 0, 0], 
              [1. / sqrt(5), 0, 0, 1. / sqrt(5), 1. / sqrt(5), 0, 1. / sqrt(5), 0, 1. / sqrt(5), 0]]
@@ -50,59 +50,59 @@ class TestWeightedDegreeFeatureSpace(unittest2.TestCase):
         self.feature_space_builder_patch.start().return_value = self.feature_space_one_gram_abb
 
         feature_space = WeightedDegreeFeatureSpace(self.alphabet, n=1, Y=self.abb, is_normalized=True)
-        feature_space_normalized = numpy.array(feature_space.feature_space.todense())
+        feature_space_normalized = np.array(feature_space.feature_space.todense())
 
-        numpy.testing.assert_array_equal(feature_space_normalized, self.feature_space_normalized_one_gram_abb)
+        np.testing.assert_array_equal(feature_space_normalized, self.feature_space_normalized_one_gram_abb)
 
     def test_two_gram_one_y_normalized_feature_space_is_normalized(self):
         self.feature_space_builder_patch.start().return_value = self.feature_space_two_gram_abb
 
         feature_space = WeightedDegreeFeatureSpace(self.alphabet, n=2, Y=self.abb, is_normalized=True)
-        feature_space_normalized = numpy.array(feature_space.feature_space.todense())
+        feature_space_normalized = np.array(feature_space.feature_space.todense())
 
-        numpy.testing.assert_array_equal(feature_space_normalized, self.feature_space_normalized_two_gram_abb)
+        np.testing.assert_array_equal(feature_space_normalized, self.feature_space_normalized_two_gram_abb)
 
     def test_two_gram_two_y_normalized_feature_space_is_normalized(self):
         self.feature_space_builder_patch.start().return_value = self.feature_space_one_gram_abb_abaaa
 
         feature_space = WeightedDegreeFeatureSpace(self.alphabet, n=1, Y=self.abb_abaaa, is_normalized=True)
-        feature_space_normalized = numpy.array(feature_space.feature_space.todense())
+        feature_space_normalized = np.array(feature_space.feature_space.todense())
 
-        numpy.testing.assert_array_equal(feature_space_normalized, self.feature_space_normalized_one_gram_abb_abaaa)
+        np.testing.assert_array_equal(feature_space_normalized, self.feature_space_normalized_one_gram_abb_abaaa)
 
     def test_smaller_length_than_train_y_length_compute_one_gram_weights_returns_expected_weights(self):
         self.feature_space_builder_patch.start().return_value = self.feature_space_one_gram_abb
         feature_space = WeightedDegreeFeatureSpace(self.alphabet, n=1, Y=self.abb, is_normalized=False)
 
-        weighted_degree_weights = feature_space.compute_weights(y_weights=numpy.array([0.5]), y_length=2)
+        weighted_degree_weights = feature_space.compute_weights(y_weights=np.array([0.5]), y_length=2)
 
-        numpy.testing.assert_array_equal(weighted_degree_weights, self.weighted_degree_weights_length_two_one_half_abb)
+        np.testing.assert_array_equal(weighted_degree_weights, self.weighted_degree_weights_length_two_one_half_abb)
 
     def test_larger_length_than_train_y_length_compute_one_gram_weights_returns_expected_weights(self):
         self.feature_space_builder_patch.start().return_value = self.feature_space_one_gram_abb
         feature_space = WeightedDegreeFeatureSpace(self.alphabet, n=1, Y=self.abb, is_normalized=False)
 
-        weighted_degree_weights = feature_space.compute_weights(y_weights=numpy.array([0.5]), y_length=4)
+        weighted_degree_weights = feature_space.compute_weights(y_weights=np.array([0.5]), y_length=4)
 
-        numpy.testing.assert_array_equal(weighted_degree_weights, self.weighted_degree_weights_length_four_one_half_abb)
+        np.testing.assert_array_equal(weighted_degree_weights, self.weighted_degree_weights_length_four_one_half_abb)
 
     def test_two_y_with_different_weights_compute_two_gram_weights_returns_expected_weights(self):
         self.feature_space_builder_patch.start().return_value = self.feature_space_two_gram_abb_abaaa
         feature_space = WeightedDegreeFeatureSpace(self.alphabet, n=2, Y=self.abb_abaaa, is_normalized=False)
 
-        weighted_degree_weights = feature_space.compute_weights(y_weights=numpy.array([0.2, 0.5]), y_length=5)
+        weighted_degree_weights = feature_space.compute_weights(y_weights=np.array([0.2, 0.5]), y_length=5)
 
-        numpy.testing.assert_array_equal(weighted_degree_weights, self.weighted_degree_weights_two_grams_abb_abaaa)
+        np.testing.assert_array_equal(weighted_degree_weights, self.weighted_degree_weights_two_grams_abb_abaaa)
 
 
     def test_compute_weights_does_not_change_feature_space(self):
         self.feature_space_builder_patch.start().return_value = self.feature_space_one_gram_abb
         feature_space = WeightedDegreeFeatureSpace(self.alphabet, n=1, Y=self.abb, is_normalized=False)
 
-        feature_space.compute_weights(y_weights=numpy.array([0.5]), y_length=2)
+        feature_space.compute_weights(y_weights=np.array([0.5]), y_length=2)
         weighted_degree_feature_space = feature_space.feature_space
 
-        numpy.testing.assert_array_equal(weighted_degree_feature_space.toarray(),
+        np.testing.assert_array_equal(weighted_degree_feature_space.toarray(),
                                          self.feature_space_one_gram_abb.toarray())
 
 

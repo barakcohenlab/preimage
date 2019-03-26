@@ -1,6 +1,6 @@
 __author__ = 'amelie'
 
-import numpy
+import numpy as np
 from preimage.features.gs_similarity_weights import compute_gs_similarity_weights
 from preimage.utils.alphabet import transform_strings_to_integer_lists, get_n_grams
 
@@ -27,14 +27,14 @@ class GenericStringSimilarityFeatureSpace:
     def __init__(self, alphabet, n, Y, is_normalized, gs_kernel):
         self.n = int(n)
         self.is_normalized = is_normalized
-        self._y_lengths = numpy.array([len(y) for y in Y])
-        self.max_train_length = numpy.max(self._y_lengths)
+        self._y_lengths = np.array([len(y) for y in Y])
+        self.max_train_length = np.max(self._y_lengths)
         self.gs_kernel = gs_kernel
         self._Y_int = transform_strings_to_integer_lists(Y, alphabet)
         self._n_grams_int = transform_strings_to_integer_lists(get_n_grams(alphabet, n), alphabet)
         self._n_gram_similarity_matrix = gs_kernel.get_alphabet_similarity_matrix()
         if is_normalized:
-            self._normalization = numpy.sqrt(gs_kernel.element_wise_kernel(Y))
+            self._normalization = np.sqrt(gs_kernel.element_wise_kernel(Y))
 
     def compute_weights(self, y_weights, y_length):
         """Compute the inference graph weights
@@ -51,7 +51,7 @@ class GenericStringSimilarityFeatureSpace:
         gs_weights : [len(alphabet)**n, y_n_gram_count * len(alphabet)**n]
             Weight of each n-gram at each position, where y_n_gram_count is the number of n-gram in y_length.
         """
-        normalized_weights = numpy.copy(y_weights)
+        normalized_weights = np.copy(y_weights)
         max_length = max(y_length, self.max_train_length)
         if self.is_normalized:
             normalized_weights *= 1. / self._normalization
@@ -59,4 +59,4 @@ class GenericStringSimilarityFeatureSpace:
         position_matrix = self.gs_kernel.get_position_matrix(max_length)
         gs_weights = compute_gs_similarity_weights(n_partitions, self._n_grams_int, self._Y_int, normalized_weights,
                                                    self._y_lengths, position_matrix, self._n_gram_similarity_matrix)
-        return numpy.array(gs_weights)
+        return np.array(gs_weights)

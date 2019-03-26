@@ -1,6 +1,6 @@
 __author__ = 'amelie'
 
-import numpy
+import numpy as np
 
 from preimage.utils.alphabet import get_index_to_n_gram
 from preimage.exceptions.shape import InvalidShapeError
@@ -27,16 +27,16 @@ class GraphBuilder:
         self._n_gram_count = len(self.alphabet) ** self.n
         self._entering_edges = self._get_entering_edge_indexes(self._n_gram_count, alphabet, n)
         self._index_to_n_gram = get_index_to_n_gram(alphabet, self.n)
-        self._n_gram_indexes = 0 if n == 1 else numpy.arange(0, self._n_gram_count)
+        self._n_gram_indexes = 0 if n == 1 else np.arange(0, self._n_gram_count)
 
     def _get_entering_edge_indexes(self, n_gram_count, alphabet, n):
         if n == 1:
-            entering_edges = numpy.array([numpy.arange(0, len(alphabet))])
+            entering_edges = np.array([np.arange(0, len(alphabet))])
         else:
             step_size = len(self.alphabet) ** (n - 1)
-            entering_edges = [numpy.tile(numpy.arange(i, n_gram_count, step_size), len(alphabet))
+            entering_edges = [np.tile(np.arange(i, n_gram_count, step_size), len(alphabet))
                               for i in range(step_size)]
-            entering_edges = numpy.array(entering_edges).reshape(n_gram_count, len(alphabet))
+            entering_edges = np.array(entering_edges).reshape(n_gram_count, len(alphabet))
         return entering_edges
 
     def build_graph(self, graph_weights, y_length):
@@ -64,7 +64,7 @@ class GraphBuilder:
 
     def _build_graph(self, n_partitions, graph, graph_weights):
         for i in range(1, n_partitions):
-            graph[i, :] = numpy.max(graph[i - 1, self._entering_edges], axis=1) + self._get_weights(i, graph_weights)
+            graph[i, :] = np.max(graph[i - 1, self._entering_edges], axis=1) + self._get_weights(i, graph_weights)
 
     def find_max_string(self, graph_weights, y_length):
         """Construct the graph and find the string of maximum value.
@@ -87,7 +87,7 @@ class GraphBuilder:
         n_partitions = y_length - self.n + 1
         self._verify_graph_weights_and_y_length(graph_weights, n_partitions)
         graph = self._initialize_graph(2, graph_weights)
-        predecessors = numpy.empty((n_partitions - 1, self._n_gram_count), dtype=numpy.int)
+        predecessors = np.empty((n_partitions - 1, self._n_gram_count), dtype=np.int)
         self._build_graph_with_predecessors(n_partitions, graph, graph_weights, predecessors)
         partition_index, n_gram_index = self._get_max_string_end_indexes(graph, n_partitions)
         max_string = self._build_max_string(partition_index, n_gram_index, predecessors)
@@ -95,13 +95,13 @@ class GraphBuilder:
 
     def _build_graph_with_predecessors(self, n_partitions, graph, graph_weights, predecessors):
         for i in range(1, n_partitions):
-            max_entering_edge_indexes = numpy.argmax(graph[0, self._entering_edges], axis=1)
+            max_entering_edge_indexes = np.argmax(graph[0, self._entering_edges], axis=1)
             predecessors[i - 1, :] = self._entering_edges[self._n_gram_indexes, max_entering_edge_indexes]
             graph[1, :] = graph[0, predecessors[i - 1, :]] + self._get_weights(i, graph_weights)
             graph[0, :] = graph[1, :]
 
     def _get_max_string_end_indexes(self, graph, n_partitions):
-        n_gram_index = numpy.argmax(graph[0, :])
+        n_gram_index = np.argmax(graph[0, :])
         partition_index = n_partitions - 2
         return partition_index, n_gram_index
 
@@ -131,7 +131,7 @@ class GraphBuilder:
         """
         min_partition_index, n_partitions = self._get_min_max_partition(graph_weights, max_y_length, min_y_length)
         graph = self._initialize_graph(n_partitions, graph_weights)
-        predecessors = numpy.empty((n_partitions - 1, self._n_gram_count), dtype=numpy.int)
+        predecessors = np.empty((n_partitions - 1, self._n_gram_count), dtype=np.int)
         self._build_complete_graph_with_predecessors(n_partitions, graph, graph_weights, predecessors)
         end_indexes = self._get_max_string_end_indexes_in_range(graph, min_partition_index, n_partitions, is_normalized)
         max_string = self._build_max_string(end_indexes[0], end_indexes[1], predecessors)
@@ -146,13 +146,13 @@ class GraphBuilder:
         return min_partition_index, n_partitions
 
     def _initialize_graph(self, n_partitions, graph_weights):
-        graph = numpy.empty((n_partitions, self._n_gram_count))
+        graph = np.empty((n_partitions, self._n_gram_count))
         graph[0, :] = self._get_weights(0, graph_weights)
         return graph
 
     def _build_complete_graph_with_predecessors(self, n_partitions, graph, graph_weights, predecessors):
         for i in range(1, n_partitions):
-            max_entering_edge_indexes = numpy.argmax(graph[i - 1, self._entering_edges], axis=1)
+            max_entering_edge_indexes = np.argmax(graph[i - 1, self._entering_edges], axis=1)
             predecessors[i - 1, :] = self._entering_edges[self._n_gram_indexes, max_entering_edge_indexes]
             graph[i, :] = graph[i - 1, predecessors[i - 1, :]] + self._get_weights(i, graph_weights)
 
@@ -165,13 +165,13 @@ class GraphBuilder:
 
     def _get_max_string_end_indexes_in_range(self, graph, min_partition, n_partitions, is_normalized):
         norm = [n_gram_count for n_gram_count in range(min_partition + 1, n_partitions + 1)]
-        norm = numpy.array(norm).reshape(-1, 1)
+        norm = np.array(norm).reshape(-1, 1)
         if is_normalized:
-            graph[min_partition:, :] *= 1. / numpy.sqrt(norm)
-            end_indexes = numpy.unravel_index(numpy.argmax(graph[min_partition:, :]), graph[min_partition:, :].shape)
+            graph[min_partition:, :] *= 1. / np.sqrt(norm)
+            end_indexes = np.unravel_index(np.argmax(graph[min_partition:, :]), graph[min_partition:, :].shape)
         else:
             graph[min_partition:, :] = norm - 2 * graph[min_partition:, :]
-            end_indexes = numpy.unravel_index(numpy.argmin(graph[min_partition:, :]), graph[min_partition:, :].shape)
+            end_indexes = np.unravel_index(np.argmin(graph[min_partition:, :]), graph[min_partition:, :].shape)
         partition_index = end_indexes[0] + min_partition - 1
         return partition_index, end_indexes[1]
 

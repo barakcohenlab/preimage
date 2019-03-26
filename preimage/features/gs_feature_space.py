@@ -1,6 +1,6 @@
 __author__ = 'amelie'
 
-import numpy
+import numpy as np
 
 from preimage.features.string_feature_space import build_feature_space_with_positions
 from preimage.utils.position import compute_position_weights
@@ -60,12 +60,12 @@ class GenericStringFeatureSpace:
     def _normalize(self, feature_space, n, Y, sigma_position, is_normalized, alphabet):
         if is_normalized:
             y_y_similarity = element_wise_kernel(Y, sigma_position, n, alphabet)
-            y_normalization = 1. / numpy.sqrt(y_y_similarity)
-            data_normalization = y_normalization.repeat(numpy.diff(feature_space.indptr))
+            y_normalization = 1. / np.sqrt(y_y_similarity)
+            data_normalization = y_normalization.repeat(np.diff(feature_space.indptr))
             feature_space.data *= data_normalization
 
     def _get_n_gram_count_in_each_y(self, n, Y):
-        y_n_gram_counts = numpy.array([len(y) - n + 1 for y in Y])
+        y_n_gram_counts = np.array([len(y) - n + 1 for y in Y])
         return y_n_gram_counts
 
     def compute_weights(self, y_weights, y_length):
@@ -84,19 +84,19 @@ class GenericStringFeatureSpace:
             Weight of each n-gram at each position.
         """
         y_n_gram_count = y_length - self.n + 1
-        data_copy = numpy.copy(self.feature_space.data)
+        data_copy = np.copy(self.feature_space.data)
         self.feature_space.data *= self._repeat_each_y_weight_by_y_column_count(y_weights)
-        weighted_degree_weights = numpy.array(self.feature_space.sum(axis=0))[0].reshape(self.max_n_gram_count, -1)
+        weighted_degree_weights = np.array(self.feature_space.sum(axis=0))[0].reshape(self.max_n_gram_count, -1)
         self.feature_space.data = data_copy
         gs_weights = self._transform_in_gs_weights(y_n_gram_count, weighted_degree_weights)
         return gs_weights
 
     def _transform_in_gs_weights(self, y_n_gram_count, weighted_degree_weights):
-        gs_weights = numpy.empty((y_n_gram_count, self._alphabet_n_gram_count))
+        gs_weights = np.empty((y_n_gram_count, self._alphabet_n_gram_count))
         for i in range(y_n_gram_count):
             position_weights = compute_position_weights(i, self.max_n_gram_count, self.sigma_position).reshape(-1, 1)
             gs_weights[i, :] = (weighted_degree_weights * position_weights).sum(axis=0)
         return gs_weights
 
     def _repeat_each_y_weight_by_y_column_count(self, y_weights):
-        return y_weights.repeat(numpy.diff(self.feature_space.indptr))
+        return y_weights.repeat(np.diff(self.feature_space.indptr))

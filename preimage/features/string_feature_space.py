@@ -4,7 +4,7 @@ __author__ = 'amelie'
 
 from collections import Counter
 
-import numpy
+import numpy as np
 from scipy.sparse import csr_matrix
 
 from preimage.utils.alphabet import get_n_gram_to_index
@@ -30,7 +30,7 @@ def build_feature_space_without_positions(alphabet, n, Y):
         in Y.
     """
     n = int(n)
-    n_examples = numpy.array(Y).shape[0]
+    n_examples = np.array(Y).shape[0]
     n_gram_to_index = get_n_gram_to_index(alphabet, n)
     index_pointers, indexes, data = __initialize_pointers_indexes_data(n_examples)
     __build_y_pointers_indexes_data(index_pointers, indexes, data, n, n_gram_to_index, Y)
@@ -39,7 +39,7 @@ def build_feature_space_without_positions(alphabet, n, Y):
 
 
 def __initialize_pointers_indexes_data(n_examples):
-    index_pointers = numpy.empty(n_examples + 1, dtype=numpy.int)
+    index_pointers = np.empty(n_examples + 1, dtype=np.int)
     index_pointers[0] = 0
     indexes = []
     data = []
@@ -49,7 +49,7 @@ def __initialize_pointers_indexes_data(n_examples):
 def __build_y_pointers_indexes_data(index_pointers, indexes, data, n, n_gram_to_index, Y):
     for y_index, y in enumerate(Y):
         y_column_indexes = __get_y_indexes(y, n, n_gram_to_index)
-        y_unique_column_indexes = list(numpy.unique(y_column_indexes))
+        y_unique_column_indexes = list(np.unique(y_column_indexes))
         index_pointers[y_index + 1] = __get_y_index_pointer(y_index, index_pointers, y_unique_column_indexes)
         indexes += y_unique_column_indexes
         data += __get_y_data(y_column_indexes, y_unique_column_indexes)
@@ -76,8 +76,8 @@ def __get_y_data(y_n_gram_indexes, unique_n_gram_indexes):
 
 
 def __build_csr_matrix(index_pointers, indexes, data, n_rows, n_columns):
-    return csr_matrix((numpy.array(data), numpy.array(indexes), numpy.array(index_pointers)),
-                      shape=(n_rows, n_columns), dtype=numpy.float)
+    return csr_matrix((np.array(data), np.array(indexes), np.array(index_pointers)),
+                      shape=(n_rows, n_columns), dtype=np.float)
 
 
 def build_feature_space_with_positions(alphabet, n, Y):
@@ -99,7 +99,7 @@ def build_feature_space_with_positions(alphabet, n, Y):
         samples and max_n_gram_count is the number of n-gram in the highest length string of Y.
     """
     n = int(n)
-    n_examples = numpy.array(Y).shape[0]
+    n_examples = np.array(Y).shape[0]
     n_gram_to_index = get_n_gram_to_index(alphabet, n)
     index_pointers, indexes, data = __initialize_pointers_indexes_data(n_examples)
     __build_pointers_indexes_data_with_positions(index_pointers, indexes, data, n, n_gram_to_index, Y)
@@ -109,7 +109,7 @@ def build_feature_space_with_positions(alphabet, n, Y):
 
 
 def __get_n_columns(n, n_gram_count_in_alphabet, Y):
-    y_max_n_gram_count = numpy.max([len(y) for y in Y]) - n + 1
+    y_max_n_gram_count = np.max([len(y) for y in Y]) - n + 1
     n_columns = y_max_n_gram_count * n_gram_count_in_alphabet
     return n_columns
 

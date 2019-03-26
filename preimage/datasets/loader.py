@@ -6,7 +6,7 @@ import pickle
 import gzip
 from os.path import dirname, join
 
-import numpy
+import numpy as np
 
 from preimage.datasets.amino_acid_file import AminoAcidFile
 
@@ -26,7 +26,7 @@ class StructuredOutputDataset:
     def __init__(self, X, Y):
         self.X = X
         self.Y = Y
-        self.y_lengths = numpy.array([len(y) for y in Y])
+        self.y_lengths = np.array([len(y) for y in Y])
 
 
 class StandardDataset:
@@ -63,10 +63,10 @@ def load_ocr_letters(fold_id=0):
         Testing dataset.
     """
     data = __load_gz_pickle_file('ocrletters.pickle.gz')
-    train_indexes = numpy.where(data['fold_ids'] == fold_id)
-    test_indexes = numpy.where(data['fold_ids'] != fold_id)
-    Y_train = numpy.array(data['y'], dtype=numpy.str)[train_indexes]
-    Y_test = numpy.array(data['y'], dtype=numpy.str)[test_indexes]
+    train_indexes = np.where(data['fold_ids'] == fold_id)
+    test_indexes = np.where(data['fold_ids'] != fold_id)
+    Y_train = np.array(data['y'], dtype=np.str)[train_indexes]
+    Y_test = np.array(data['y'], dtype=np.str)[test_indexes]
     train_dataset = StructuredOutputDataset(data['X'][train_indexes], Y_train)
     test_dataset = StructuredOutputDataset(data['X'][test_indexes], Y_test)
     return train_dataset, test_dataset
@@ -103,7 +103,7 @@ def load_bpps_dataset():
 
 def __load_peptide_dataset(file_name):
     data = __load_pickle_file(file_name)
-    X = numpy.array(data['X'], dtype=numpy.str)
+    X = np.array(data['X'], dtype=np.str)
     train_dataset = StandardDataset(X, data['y'])
     return train_dataset
 
@@ -134,7 +134,7 @@ def load_amino_acids_and_descriptors(file_name=AminoAcidFile.blosum62_natural):
     path_to_file = join(dirname(__file__), 'amino_acid_matrix', file_name)
     with open(path_to_file, 'r') as data_file:
         lines = data_file.readlines()
-    splitted_lines = numpy.array([line.split() for line in lines])
+    splitted_lines = np.array([line.split() for line in lines])
     amino_acids = [str(letter) for letter in splitted_lines[:, 0]]
-    descriptors = numpy.array(splitted_lines[:, 1:], dtype=numpy.float)
+    descriptors = np.array(splitted_lines[:, 1:], dtype=np.float)
     return amino_acids, descriptors

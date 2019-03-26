@@ -1,6 +1,6 @@
 __author__ = 'amelie'
 
-import numpy
+import numpy as np
 
 from preimage.inference.euler import EulerianPath
 from preimage.features.n_gram_feature_space import NGramFeatureSpace
@@ -26,28 +26,28 @@ class EulerianPathModel(Model):
         self._feature_space_ = NGramFeatureSpace(self._alphabet, self._n, inference_parameters.Y_train,
                                                  self._is_normalized)
         if not self._is_using_length:
-            Y_weights = numpy.dot(inference_parameters.weights, inference_parameters.gram_matrix).T
+            Y_weights = np.dot(inference_parameters.weights, inference_parameters.gram_matrix).T
             self._find_thresholds(Y_weights)
 
     def _find_thresholds(self, Y_weights):
         n_examples = Y_weights.shape[0]
         Y_n_gram_weights = self._get_n_gram_weights(Y_weights, n_examples)
-        n_gram_counts = self._feature_space_.compute_weights(numpy.ones(n_examples))
-        n_gram_counts = numpy.array(n_gram_counts, dtype=numpy.int)
+        n_gram_counts = self._feature_space_.compute_weights(np.ones(n_examples))
+        n_gram_counts = np.array(n_gram_counts, dtype=np.int)
         self._thresholds_ = self._find_weights_where_sum_weights_above_is_n_gram_count(n_gram_counts, Y_n_gram_weights)
 
     def _get_n_gram_weights(self, Y_weights, n_training_examples):
-        Y_n_gram_weights = numpy.empty((n_training_examples, len(self._alphabet) ** self._n))
+        Y_n_gram_weights = np.empty((n_training_examples, len(self._alphabet) ** self._n))
         for y_index, y_weight in enumerate(Y_weights):
             Y_n_gram_weights[y_index] = self._feature_space_.compute_weights(y_weight)
         return Y_n_gram_weights
 
     def _find_weights_where_sum_weights_above_is_n_gram_count(self, n_gram_counts, Y_n_gram_weights):
-        thresholds = numpy.zeros(len(self._alphabet) ** self._n)
+        thresholds = np.zeros(len(self._alphabet) ** self._n)
         for n_gram_index, n_gram_count in enumerate(n_gram_counts):
             if n_gram_count > 0:
                 n_gram_weights = Y_n_gram_weights[:, n_gram_index]
-                threshold_index = numpy.argpartition(-n_gram_weights, n_gram_count)[n_gram_count]
+                threshold_index = np.argpartition(-n_gram_weights, n_gram_count)[n_gram_count]
                 thresholds[n_gram_index] = n_gram_weights[threshold_index]
         return thresholds
 

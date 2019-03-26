@@ -2,7 +2,7 @@ __author__ = 'amelie'
 
 from copy import deepcopy
 
-import numpy
+import numpy as np
 
 from preimage.utils.alphabet import get_index_to_n_gram
 from preimage.exceptions.n_gram import InvalidNGramLengthError, InvalidYLengthError, NoThresholdsError
@@ -90,7 +90,7 @@ class EulerianPath:
         """
         self._verify_weights_length_thresholds(n_gram_weights, y_length, thresholds)
         rounded_weights = self._round_weights(n_gram_weights, thresholds, y_length)
-        n_gram_indexes = numpy.where(rounded_weights > 0)[0]
+        n_gram_indexes = np.where(rounded_weights > 0)[0]
         n_grams = self._get_n_grams_in_selected_indexes(n_gram_indexes, rounded_weights)
         y = self._find_y_corresponding_to_n_grams(n_grams)
         if y_length is not None:
@@ -116,29 +116,29 @@ class EulerianPath:
         return rounded_weights
 
     def _round_weights_to_n_gram_count(self, weights, n_gram_count_in_y):
-        weights_copy = numpy.copy(weights)
+        weights_copy = np.copy(weights)
         weights_copy[weights_copy < 0] = 0.
-        rounded_weights = numpy.round(weights_copy)
+        rounded_weights = np.round(weights_copy)
         positive_weights = weights_copy[weights > 0]
         if rounded_weights.sum() < n_gram_count_in_y:
             rounded_weights = self._add_n_grams_to_rounded_sum(weights_copy, positive_weights, n_gram_count_in_y)
         return rounded_weights
 
     def _add_n_grams_to_rounded_sum(self, weights_copy, positive_weights, n_gram_count_in_y):
-        while numpy.round(weights_copy).sum() < n_gram_count_in_y:
-            multiplicative_factors = (numpy.ceil(positive_weights + 0.5) - 0.49) / positive_weights
-            min_factor = numpy.min(multiplicative_factors[multiplicative_factors > 1.])
+        while np.round(weights_copy).sum() < n_gram_count_in_y:
+            multiplicative_factors = (np.ceil(positive_weights + 0.5) - 0.49) / positive_weights
+            min_factor = np.min(multiplicative_factors[multiplicative_factors > 1.])
             weights_copy = min_factor * weights_copy
             positive_weights = min_factor * positive_weights
-        return numpy.round(weights_copy)
+        return np.round(weights_copy)
 
     def _round_weights_with_thresholds(self, weights, thresholds):
-        rounded_weights = numpy.asarray(weights > thresholds, dtype=numpy.int)
+        rounded_weights = np.asarray(weights > thresholds, dtype=np.int)
         non_zero_weight_count = rounded_weights.sum()
         # Avoid having zero n gram predicted
         if non_zero_weight_count < self.min_n_gram_count:
-            kth_indexes = numpy.arange(0, self.min_n_gram_count)
-            best_weight_indexes = numpy.argpartition(-weights, kth_indexes)[0:self.min_n_gram_count]
+            kth_indexes = np.arange(0, self.min_n_gram_count)
+            best_weight_indexes = np.argpartition(-weights, kth_indexes)[0:self.min_n_gram_count]
             best_zero_weight_indexes = best_weight_indexes[rounded_weights[best_weight_indexes] == 0]
             rounded_weights[best_zero_weight_indexes[0:self.min_n_gram_count - non_zero_weight_count]] = 1
         return rounded_weights
@@ -146,7 +146,7 @@ class EulerianPath:
     def _get_n_grams_in_selected_indexes(self, selected_n_gram_indexes, rounded_weights):
         repeated_n_grams = [self._index_to_n_gram[index] for index in selected_n_gram_indexes
                             for _ in range(int(rounded_weights[index]))]
-        return numpy.array(repeated_n_grams)
+        return np.array(repeated_n_grams)
 
     def _find_y_corresponding_to_n_grams(self, n_grams):
         nodes, leaving_edges, marked_edges = self._get_nodes_and_edges(n_grams)
@@ -158,9 +158,9 @@ class EulerianPath:
         return y
 
     def _get_nodes_and_edges(self, n_grams):
-        nodes = numpy.unique([n_gram[j:j + self.n - 1] for n_gram in n_grams for j in range(2)])
-        nodes = nodes[numpy.random.permutation(nodes.shape[0])]
-        random_n_grams = n_grams[numpy.random.permutation(n_grams.shape[0])]
+        nodes = np.unique([n_gram[j:j + self.n - 1] for n_gram in n_grams for j in range(2)])
+        nodes = nodes[np.random.permutation(nodes.shape[0])]
+        random_n_grams = n_grams[np.random.permutation(n_grams.shape[0])]
         leaving_edges = {node: [] for node in nodes}
         marked_edges = {node: [] for node in nodes}
         self._update_leaving_and_marked_edges(leaving_edges, marked_edges, random_n_grams)

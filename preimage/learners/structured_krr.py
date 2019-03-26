@@ -1,6 +1,6 @@
 __author__ = 'amelie'
 
-import numpy
+import numpy as np
 from scipy import linalg
 from sklearn.base import BaseEstimator
 
@@ -55,10 +55,10 @@ class StructuredKernelRidgeRegression(BaseEstimator):
         return self
 
     def _solve(self, gram_matrix):
-        diagonal = numpy.copy(gram_matrix.diagonal())
-        numpy.fill_diagonal(gram_matrix, diagonal + self.alpha)
+        diagonal = np.copy(gram_matrix.diagonal())
+        np.fill_diagonal(gram_matrix, diagonal + self.alpha)
         weights = linalg.inv(gram_matrix)
-        numpy.fill_diagonal(gram_matrix, diagonal)
+        np.fill_diagonal(gram_matrix, diagonal)
         return weights
 
     def predict(self, X, y_lengths=None):
@@ -80,7 +80,7 @@ class StructuredKernelRidgeRegression(BaseEstimator):
         if self.weights_ is None:
             raise ValueError("The fit function must be called before predict")
         gram_matrix = self.kernel(self.X_train_, X)
-        Y_weights = numpy.dot(self.weights_, gram_matrix).T
+        Y_weights = np.dot(self.weights_, gram_matrix).T
         Y_predicted = self.inference_model.predict(Y_weights, y_lengths)
         return Y_predicted
 

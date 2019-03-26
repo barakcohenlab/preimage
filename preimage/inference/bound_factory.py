@@ -2,7 +2,7 @@
 
 __author__ = 'amelie'
 
-import numpy
+import numpy as np
 
 from preimage.inference.bound_calculator import OCRMinBoundCalculator, MaxBoundCalculator, PeptideMinBoundCalculator
 from preimage.inference.node_creator import NodeCreator
@@ -35,7 +35,7 @@ def get_n_gram_node_creator(n, graph, graph_weights, y_length, n_gram_to_index, 
         Node creator for the branch and bound search instantiated with the n-gram bounds
     """
     max_bound = MaxBoundCalculator(n, graph, graph_weights.reshape(1, -1), n_gram_to_index)
-    min_bound = OCRMinBoundCalculator(n, numpy.ones(y_length), n_grams)
+    min_bound = OCRMinBoundCalculator(n, np.ones(y_length), n_grams)
     node_creator = NodeCreator(min_bound, max_bound, n_grams)
     return node_creator
 

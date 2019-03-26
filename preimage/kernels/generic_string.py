@@ -1,6 +1,6 @@
 __author__ = 'amelie'
 
-import numpy
+import numpy as np
 
 from preimage.datasets.loader import load_amino_acids_and_descriptors
 from preimage.kernels._generic_string import element_wise_generic_string_kernel, generic_string_kernel_with_sigma_c
@@ -31,9 +31,9 @@ def element_wise_kernel(X, sigma_position, n, alphabet):
     kernel : array, shape = [n_samples]
         Similarity of each string with itself in the GS kernel, where n_samples is the number of examples in X.
         """
-    X = numpy.array(X)
-    x_lengths = numpy.array([len(x) for x in X], dtype=numpy.int64)
-    max_length = numpy.max(x_lengths) - n + 1
+    X = np.array(X)
+    x_lengths = np.array([len(x) for x in X], dtype=np.int64)
+    max_length = np.max(x_lengths) - n + 1
     position_matrix = compute_position_weights_matrix(max_length, sigma_position)
     X_int = transform_strings_to_integer_lists(X, alphabet)
     kernel = element_wise_generic_string_kernel(X_int, x_lengths, position_matrix, n)
@@ -98,10 +98,10 @@ class GenericStringKernel:
             Similarity of each string of X1 with each string of X2, n_samples_x1 is the number of samples in X1 and
             n_samples_x2 is the number of samples in X2.
         """
-        X1 = numpy.array(X1)
-        X2 = numpy.array(X2)
+        X1 = np.array(X1)
+        X2 = np.array(X2)
         amino_acid_similarity_matrix = self.get_alphabet_similarity_matrix()
-        is_symmetric = bool(X1.shape == X2.shape and numpy.all(X1 == X2))
+        is_symmetric = bool(X1.shape == X2.shape and np.all(X1 == X2))
         max_length, x1_lengths, x2_lengths = self._get_lengths(X1, X2)
         position_matrix = self.get_position_matrix(max_length)
         X1_int = transform_strings_to_integer_lists(X1, self.alphabet)
@@ -136,28 +136,28 @@ class GenericStringKernel:
         similarity_matrix : array, shape = [len(alphabet), len(alphabet)]
             Similarity of each amino acid (letter) with all the other amino acids.
         """
-        distance_matrix = numpy.zeros((len(self.alphabet), len(self.alphabet)))
-        numpy.fill_diagonal(distance_matrix, 0)
+        distance_matrix = np.zeros((len(self.alphabet), len(self.alphabet)))
+        np.fill_diagonal(distance_matrix, 0)
         for index_one, descriptor_one in enumerate(self.descriptors):
             for index_two, descriptor_two in enumerate(self.descriptors):
                 distance = descriptor_one - descriptor_two
-                squared_distance = numpy.dot(distance, distance)
+                squared_distance = np.dot(distance, distance)
                 distance_matrix[index_one, index_two] = squared_distance
         distance_matrix /= 2. * (self.sigma_amino_acid ** 2)
-        return numpy.exp(-distance_matrix)
+        return np.exp(-distance_matrix)
 
     def _load_amino_acids_and_normalized_descriptors(self):
         amino_acids, descriptors = load_amino_acids_and_descriptors(self.amino_acid_file_name)
-        normalization = numpy.array([numpy.dot(descriptor, descriptor) for descriptor in descriptors],
-                                    dtype=numpy.float)
+        normalization = np.array([np.dot(descriptor, descriptor) for descriptor in descriptors],
+                                    dtype=np.float)
         normalization = normalization.reshape(-1, 1)
-        descriptors /= numpy.sqrt(normalization)
+        descriptors /= np.sqrt(normalization)
         return amino_acids, descriptors
 
     def _get_lengths(self, X1, X2):
-        x1_lengths = numpy.array([len(x) for x in X1], dtype=numpy.int64)
-        x2_lengths = numpy.array([len(x) for x in X2], dtype=numpy.int64)
-        max_length = max(numpy.max(x1_lengths), numpy.max(x2_lengths))
+        x1_lengths = np.array([len(x) for x in X1], dtype=np.int64)
+        x2_lengths = np.array([len(x) for x in X2], dtype=np.int64)
+        max_length = max(np.max(x1_lengths), np.max(x2_lengths))
         return max_length, x1_lengths, x2_lengths
 
     def _normalize(self, gram_matrix, X1, x1_lengths, X2, x2_lengths, position_matrix, similarity_matrix, is_symmetric):
@@ -170,7 +170,7 @@ class GenericStringKernel:
                                                                           similarity_matrix, self.n)
                 x2_norm = element_wise_generic_string_kernel_with_sigma_c(X2, x2_lengths, position_matrix,
                                                                           similarity_matrix, self.n)
-            gram_matrix = ((gram_matrix / numpy.sqrt(x2_norm)).T / numpy.sqrt(x1_norm)).T
+            gram_matrix = ((gram_matrix / np.sqrt(x2_norm)).T / np.sqrt(x1_norm)).T
         return gram_matrix
 
     def element_wise_kernel(self, X):
@@ -186,10 +186,10 @@ class GenericStringKernel:
         kernel : array, shape = [n_samples]
             Similarity of each string with itself in the GS kernel, where n_samples is the number of examples in X.
         """
-        X = numpy.array(X)
+        X = np.array(X)
         X_int = transform_strings_to_integer_lists(X, self.alphabet)
-        x_lengths = numpy.array([len(x) for x in X], dtype=numpy.int64)
-        max_length = numpy.max(x_lengths)
+        x_lengths = np.array([len(x) for x in X], dtype=np.int64)
+        max_length = np.max(x_lengths)
         similarity_matrix = self.get_alphabet_similarity_matrix()
         position_matrix = self.get_position_matrix(max_length)
         kernel = element_wise_generic_string_kernel_with_sigma_c(X_int, x_lengths, position_matrix, similarity_matrix,

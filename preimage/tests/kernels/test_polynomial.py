@@ -1,7 +1,7 @@
 __author__ = 'amelie'
 
 import unittest2
-import numpy.testing
+import numpy as np.testing
 
 from preimage.kernels.polynomial import PolynomialKernel
 
@@ -21,35 +21,35 @@ class TestPolynomialKernel(unittest2.TestCase):
 
         gram_matrix = kernel(self.X_one, self.X_one)
 
-        numpy.testing.assert_array_equal(gram_matrix, self.gram_matrix_degree_one_x_one_x_one)
+        np.testing.assert_array_equal(gram_matrix, self.gram_matrix_degree_one_x_one_x_one)
 
     def test_degree_two_x_one_x_one_polynomial_kernel_returns_expected_value(self):
         kernel = PolynomialKernel(degree=2, bias=0, is_normalized=False)
 
         gram_matrix = kernel(self.X_one, self.X_one)
 
-        numpy.testing.assert_array_equal(gram_matrix, self.gram_matrix_degree_two_x_one_x_one)
+        np.testing.assert_array_equal(gram_matrix, self.gram_matrix_degree_two_x_one_x_one)
 
     def test_degree_one_bias_one_x_one_x_one_polynomial_kernel_returns_expected_value(self):
         kernel = PolynomialKernel(degree=1, bias=1, is_normalized=False)
 
         gram_matrix = kernel(self.X_one, self.X_one)
 
-        numpy.testing.assert_array_equal(gram_matrix, self.gram_matrix_degree_one_bias_one_x_one_x_one)
+        np.testing.assert_array_equal(gram_matrix, self.gram_matrix_degree_one_bias_one_x_one_x_one)
 
     def test_x_one_x_one_normalized_polynomial_kernel_returns_expected_value(self):
         kernel = PolynomialKernel(degree=1, bias=0, is_normalized=True)
 
         gram_matrix = kernel(self.X_one, self.X_one)
 
-        numpy.testing.assert_array_equal(gram_matrix, self.gram_matrix_normalized_x_one_x_one)
+        np.testing.assert_array_equal(gram_matrix, self.gram_matrix_normalized_x_one_x_one)
 
     def test_degree_one_x_one_x_two_normalized_polynomial_kernel_returns_expected_value(self):
         kernel = PolynomialKernel(degree=1, bias=0, is_normalized=True)
 
         gram_matrix = kernel(self.X_one, self.X_two)
 
-        numpy.testing.assert_almost_equal(gram_matrix, self.gram_matrix_normalized_x_one_x_two)
+        np.testing.assert_almost_equal(gram_matrix, self.gram_matrix_normalized_x_one_x_two)
 
 
 if __name__ == '__main__':

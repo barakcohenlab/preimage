@@ -1,6 +1,6 @@
 __author__ = 'amelie'
 
-import numpy
+import numpy as np
 
 from preimage.features.string_feature_space import build_feature_space_with_positions
 
@@ -49,8 +49,8 @@ class WeightedDegreeFeatureSpace:
 
     def _normalize(self, is_normalized, feature_space):
         if is_normalized:
-            y_normalization = 1. / numpy.sqrt(numpy.array(feature_space.sum(axis=1).reshape(1, -1))[0])
-            data_normalization = y_normalization.repeat(numpy.diff(feature_space.indptr))
+            y_normalization = 1. / np.sqrt(np.array(feature_space.sum(axis=1).reshape(1, -1))[0])
+            data_normalization = y_normalization.repeat(np.diff(feature_space.indptr))
             feature_space.data *= data_normalization
 
     def compute_weights(self, y_weights, y_length):
@@ -69,9 +69,9 @@ class WeightedDegreeFeatureSpace:
             Weight of each n-gram at each position.
         """
         y_n_gram_count = y_length - self.n + 1
-        data_copy = numpy.copy(self.feature_space.data)
+        data_copy = np.copy(self.feature_space.data)
         self.feature_space.data *= self._repeat_each_y_weight_by_y_column_count(y_weights)
-        weights_vector = numpy.array(self.feature_space.sum(axis=0))[0]
+        weights_vector = np.array(self.feature_space.sum(axis=0))[0]
         self.feature_space.data = data_copy
         weighted_degree_weights = self._get_weight_for_each_graph_partition(y_n_gram_count, weights_vector)
         return weighted_degree_weights
@@ -81,9 +81,9 @@ class WeightedDegreeFeatureSpace:
         if y_n_gram_count <= self.max_n_gram_count:
             weights_matrix = weights_matrix[0:y_n_gram_count, :]
         else:
-            zero_weight_partitions = numpy.zeros((y_n_gram_count - self.max_n_gram_count, self._alphabet_n_gram_count))
-            weights_matrix = numpy.concatenate((weights_matrix, zero_weight_partitions), axis=0)
+            zero_weight_partitions = np.zeros((y_n_gram_count - self.max_n_gram_count, self._alphabet_n_gram_count))
+            weights_matrix = np.concatenate((weights_matrix, zero_weight_partitions), axis=0)
         return weights_matrix
 
     def _repeat_each_y_weight_by_y_column_count(self, y_weights):
-        return y_weights.repeat(numpy.diff(self.feature_space.indptr))
+        return y_weights.repeat(np.diff(self.feature_space.indptr))

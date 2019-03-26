@@ -4,7 +4,7 @@ from math import sqrt
 
 from mock import Mock
 import unittest2
-import numpy
+import numpy as np
 
 from preimage.inference.bound_calculator import BoundCalculatorMock
 from preimage.inference.node import MaxNode
@@ -24,29 +24,29 @@ class TestNodeCreator(unittest2.TestCase):
 
     def setup_node_creator_one_gram(self):
         min_bound_calculator_mock = Mock()
-        min_bound_calculator_mock.get_start_node_real_values.return_value = numpy.array([1, 2, 3], dtype=numpy.float64)
-        min_bound_calculator_mock.get_start_node_bounds.return_value = numpy.array([4, 5, 6], dtype=numpy.float64)
+        min_bound_calculator_mock.get_start_node_real_values.return_value = np.array([1, 2, 3], dtype=np.float64)
+        min_bound_calculator_mock.get_start_node_bounds.return_value = np.array([4, 5, 6], dtype=np.float64)
         min_bound_calculator_mock.compute_bound.return_value = {'real_value': 1, 'bound_value': 2}
         min_bound_calculator = BoundCalculatorMock(min_bound_calculator_mock)
         max_bound_calculator_mock = Mock()
-        max_bound_calculator_mock.get_start_node_real_values.return_value = numpy.array([7, 8, 9], dtype=numpy.float64)
-        max_bound_calculator_mock.get_start_node_bounds.return_value = numpy.array([10, 11, 12], dtype=numpy.float64)
+        max_bound_calculator_mock.get_start_node_real_values.return_value = np.array([7, 8, 9], dtype=np.float64)
+        max_bound_calculator_mock.get_start_node_bounds.return_value = np.array([10, 11, 12], dtype=np.float64)
         max_bound_calculator_mock.compute_bound.return_value = {'real_value': 3, 'bound_value': 4}
         max_bound_calculator = BoundCalculatorMock(max_bound_calculator_mock)
         self.node_creator_one_gram = NodeCreator(min_bound_calculator, max_bound_calculator, self.one_grams)
 
     def setup_node_creator_two_gram(self):
         min_bound_calculator_mock = Mock()
-        min_bound_calculator_mock.get_start_node_real_values.return_value = numpy.array([1, 3, 5, 7],
-                                                                                        dtype=numpy.float64)
-        min_bound_calculator_mock.get_start_node_bounds.return_value = numpy.array([9, 11, 13, 15], dtype=numpy.float64)
+        min_bound_calculator_mock.get_start_node_real_values.return_value = np.array([1, 3, 5, 7],
+                                                                                        dtype=np.float64)
+        min_bound_calculator_mock.get_start_node_bounds.return_value = np.array([9, 11, 13, 15], dtype=np.float64)
         min_bound_calculator_mock.compute_bound.return_value = {'real_value': 0.1, 'bound_value': 0.2}
         min_bound_calculator = BoundCalculatorMock(min_bound_calculator_mock)
         max_bound_calculator_mock = Mock()
-        max_bound_calculator_mock.get_start_node_real_values.return_value = numpy.array([2, 4, 6, 8],
-                                                                                        dtype=numpy.float64)
-        max_bound_calculator_mock.get_start_node_bounds.return_value = numpy.array([10, 12, 14, 16],
-                                                                                   dtype=numpy.float64)
+        max_bound_calculator_mock.get_start_node_real_values.return_value = np.array([2, 4, 6, 8],
+                                                                                        dtype=np.float64)
+        max_bound_calculator_mock.get_start_node_bounds.return_value = np.array([10, 12, 14, 16],
+                                                                                   dtype=np.float64)
         max_bound_calculator_mock.compute_bound.return_value = {'real_value': 0.3, 'bound_value': 0.4}
         max_bound_calculator = BoundCalculatorMock(max_bound_calculator_mock)
         self.node_creator_two_gram = NodeCreator(min_bound_calculator, max_bound_calculator, self.two_grams)

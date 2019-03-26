@@ -3,7 +3,7 @@ __author__ = 'amelie'
 from math import sqrt
 
 import unittest2
-import numpy.testing
+import numpy as np.testing
 from mock import patch
 from scipy.sparse import csr_matrix
 
@@ -48,11 +48,11 @@ class TestGSFeatureSpace(unittest2.TestCase):
 
     def setup_position_weights_patch(self):
         self.position_patch = patch('preimage.features.gs_feature_space.compute_position_weights')
-        self.position_weights_length_two_small_sigma_abb = numpy.array([[1., 0, 0], [0., 1, 0]])
-        self.position_weights_length_four_small_sigma_abb = numpy.array([[1., 0, 0], [0, 1., 0], [0, 0, 1.], [0, 0, 0]])
-        self.position_weights_length_three_large_sigma_abb = numpy.array([[1., 1., 1.], [1., 1, 1.], [1., 1., 1.]])
-        self.position_weights_length_three_medium_sigma_abb = numpy.array([[1, 0.5, 0.1], [0.5, 1, 0.5], [0.1, 0.5, 1]])
-        self.position_weights_length_four_small_sigma_abb_abaaa = numpy.array([[1., 0, 0, 0], [0, 1., 0, 0],
+        self.position_weights_length_two_small_sigma_abb = np.array([[1., 0, 0], [0., 1, 0]])
+        self.position_weights_length_four_small_sigma_abb = np.array([[1., 0, 0], [0, 1., 0], [0, 0, 1.], [0, 0, 0]])
+        self.position_weights_length_three_large_sigma_abb = np.array([[1., 1., 1.], [1., 1, 1.], [1., 1., 1.]])
+        self.position_weights_length_three_medium_sigma_abb = np.array([[1, 0.5, 0.1], [0.5, 1, 0.5], [0.1, 0.5, 1]])
+        self.position_weights_length_four_small_sigma_abb_abaaa = np.array([[1., 0, 0, 0], [0, 1., 0, 0],
                                                                                [0, 0, 1., 0]])
 
     def setup_gs_kernel_patch(self):
@@ -67,9 +67,9 @@ class TestGSFeatureSpace(unittest2.TestCase):
         feature_space = GenericStringFeatureSpace(self.alphabet, n=1, Y=self.abb, sigma_position=self.small_sigma,
                                                   is_normalized=False)
 
-        gs_weights = feature_space.compute_weights(y_weights=numpy.array([0.5]), y_length=2)
+        gs_weights = feature_space.compute_weights(y_weights=np.array([0.5]), y_length=2)
 
-        numpy.testing.assert_array_equal(gs_weights, self.gs_weights_length_two_small_sigma_abb)
+        np.testing.assert_array_equal(gs_weights, self.gs_weights_length_two_small_sigma_abb)
 
     def test_large_length_small_sigma_compute_one_gram_weights_returns_expected_weights(self):
         self.feature_space_builder_patch.start().return_value = self.feature_space_one_gram_abb
@@ -77,9 +77,9 @@ class TestGSFeatureSpace(unittest2.TestCase):
         feature_space = GenericStringFeatureSpace(self.alphabet, n=1, Y=self.abb, sigma_position=self.small_sigma,
                                                   is_normalized=False)
 
-        gs_weights = feature_space.compute_weights(y_weights=numpy.array([0.5]), y_length=4)
+        gs_weights = feature_space.compute_weights(y_weights=np.array([0.5]), y_length=4)
 
-        numpy.testing.assert_array_equal(gs_weights, self.gs_weights_length_four_small_sigma_abb)
+        np.testing.assert_array_equal(gs_weights, self.gs_weights_length_four_small_sigma_abb)
 
     def test_large_sigma_compute_one_gram_weights_returns_expected_weights(self):
         self.feature_space_builder_patch.start().return_value = self.feature_space_one_gram_abb
@@ -87,9 +87,9 @@ class TestGSFeatureSpace(unittest2.TestCase):
         feature_space = GenericStringFeatureSpace(self.alphabet, n=1, Y=self.abb, sigma_position=self.large_sigma,
                                                   is_normalized=False)
 
-        gs_weights = feature_space.compute_weights(y_weights=numpy.array([0.5]), y_length=3)
+        gs_weights = feature_space.compute_weights(y_weights=np.array([0.5]), y_length=3)
 
-        numpy.testing.assert_array_equal(gs_weights, self.gs_weights_length_three_large_sigma_abb)
+        np.testing.assert_array_equal(gs_weights, self.gs_weights_length_three_large_sigma_abb)
 
     def test_medium_sigma_compute_one_gram_weights_returns_expected_weights(self):
         self.feature_space_builder_patch.start().return_value = self.feature_space_one_gram_abb
@@ -97,9 +97,9 @@ class TestGSFeatureSpace(unittest2.TestCase):
         feature_space = GenericStringFeatureSpace(self.alphabet, n=1, Y=self.abb, sigma_position=self.medium_sigma,
                                                   is_normalized=False)
 
-        gs_weights = feature_space.compute_weights(y_weights=numpy.array([0.5]), y_length=3)
+        gs_weights = feature_space.compute_weights(y_weights=np.array([0.5]), y_length=3)
 
-        numpy.testing.assert_array_equal(gs_weights, self.gs_weights_length_three_medium_sigma_abb)
+        np.testing.assert_array_equal(gs_weights, self.gs_weights_length_three_medium_sigma_abb)
 
     def test_two_gram_two_y_small_sigma_compute_one_gram_weights_returns_expected_weights(self):
         self.feature_space_builder_patch.start().return_value = self.feature_space_two_gram_abb_abaaa
@@ -107,9 +107,9 @@ class TestGSFeatureSpace(unittest2.TestCase):
         feature_space = GenericStringFeatureSpace(self.alphabet, n=2, Y=self.abb_abaaa, sigma_position=self.small_sigma,
                                                   is_normalized=False)
 
-        gs_weights = feature_space.compute_weights(y_weights=numpy.array([0.5, 1]), y_length=4)
+        gs_weights = feature_space.compute_weights(y_weights=np.array([0.5, 1]), y_length=4)
 
-        numpy.testing.assert_almost_equal(gs_weights, self.gs_weights_length_three_small_sigma_abb_abaaa)
+        np.testing.assert_almost_equal(gs_weights, self.gs_weights_length_three_small_sigma_abb_abaaa)
 
     def test_compute_weights_does_not_change_feature_space(self):
         self.feature_space_builder_patch.start().return_value = self.feature_space_one_gram_abb
@@ -117,10 +117,10 @@ class TestGSFeatureSpace(unittest2.TestCase):
         feature_space = GenericStringFeatureSpace(self.alphabet, n=1, Y=self.abb, sigma_position=self.small_sigma,
                                                   is_normalized=False)
 
-        feature_space.compute_weights(y_weights=numpy.array([0.5]), y_length=2)
+        feature_space.compute_weights(y_weights=np.array([0.5]), y_length=2)
         gs_feature_space = feature_space.feature_space
 
-        numpy.testing.assert_array_equal(gs_feature_space.toarray(), self.feature_space_one_gram_abb.toarray())
+        np.testing.assert_array_equal(gs_feature_space.toarray(), self.feature_space_one_gram_abb.toarray())
 
     def test_one_gram_one_y_small_sigma_normalize_feature_space_is_normalized(self):
         self.feature_space_builder_patch.start().return_value = self.feature_space_one_gram_abb
@@ -130,7 +130,7 @@ class TestGSFeatureSpace(unittest2.TestCase):
                                                   is_normalized=True)
         normalized_feature_space = feature_space.feature_space.toarray()
 
-        numpy.testing.assert_array_equal(normalized_feature_space, self.feature_space_normalized_one_abb)
+        np.testing.assert_array_equal(normalized_feature_space, self.feature_space_normalized_one_abb)
 
     def test_two_gram_two_y_small_sigma_normalize_feature_space_is_normalized(self):
         self.feature_space_builder_patch.start().return_value = self.feature_space_two_gram_abb_abaaa
@@ -140,7 +140,7 @@ class TestGSFeatureSpace(unittest2.TestCase):
                                                   is_normalized=True)
         normalized_feature_space = feature_space.feature_space.toarray()
 
-        numpy.testing.assert_array_equal(normalized_feature_space, self.feature_space_normalized_two_gram_abb_abaaa)
+        np.testing.assert_array_equal(normalized_feature_space, self.feature_space_normalized_two_gram_abb_abaaa)
 
 
 if __name__ == '__main__':

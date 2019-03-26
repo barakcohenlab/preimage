@@ -3,7 +3,7 @@ __author__ = 'amelie'
 import abc
 
 from sklearn.base import BaseEstimator
-import numpy
+import numpy as np
 
 from preimage.exceptions.n_gram import NoYLengthsError
 
@@ -24,9 +24,9 @@ class Model(BaseEstimator):
 
     def _find_min_max_length(self, y_lengths, Y):
         if y_lengths is None:
-            y_lengths = numpy.array([len(y) for y in Y])
-        self._min_length_ = numpy.min(y_lengths)
-        self._max_length_ = numpy.max(y_lengths)
+            y_lengths = np.array([len(y) for y in Y])
+        self._min_length_ = np.min(y_lengths)
+        self._max_length_ = np.max(y_lengths)
 
     @abc.abstractmethod
     def predict(self, Y_weights, y_lengths):

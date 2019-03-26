@@ -3,7 +3,7 @@ __author__ = 'amelie'
 from math import sqrt
 
 import unittest2
-import numpy.testing
+import numpy as np.testing
 from mock import patch
 from scipy.sparse import csr_matrix
 
@@ -46,58 +46,58 @@ class TestNGramFeatureSpace(unittest2.TestCase):
         self.feature_space_builder_patch.start().return_value = self.feature_space_one_gram_abb
 
         feature_space = NGramFeatureSpace(self.alphabet, n=1, Y=self.abb, is_normalized=True)
-        feature_space_normalized = numpy.array(feature_space.feature_space.todense())
+        feature_space_normalized = np.array(feature_space.feature_space.todense())
 
-        numpy.testing.assert_array_equal(feature_space_normalized, self.feature_space_normalized_one_gram_abb)
+        np.testing.assert_array_equal(feature_space_normalized, self.feature_space_normalized_one_gram_abb)
 
     def test_two_gram_one_y_normalized_feature_space_is_normalized(self):
         self.feature_space_builder_patch.start().return_value = self.feature_space_two_gram_abb
 
         feature_space = NGramFeatureSpace(self.alphabet, n=2, Y=self.abb, is_normalized=True)
-        feature_space_normalized = numpy.array(feature_space.feature_space.todense())
+        feature_space_normalized = np.array(feature_space.feature_space.todense())
 
-        numpy.testing.assert_array_equal(feature_space_normalized, self.feature_space_normalized_two_gram_abb)
+        np.testing.assert_array_equal(feature_space_normalized, self.feature_space_normalized_two_gram_abb)
 
     def test_two_gram_two_y_normalized_feature_space_is_normalized(self):
         self.feature_space_builder_patch.start().return_value = self.feature_space_one_gram_abb_abaaa
 
         feature_space = NGramFeatureSpace(self.alphabet, n=1, Y=self.abb, is_normalized=True)
-        feature_space_normalized = numpy.array(feature_space.feature_space.todense())
+        feature_space_normalized = np.array(feature_space.feature_space.todense())
 
-        numpy.testing.assert_array_equal(feature_space_normalized, self.feature_space_normalized_one_gram_abb_abaaa)
+        np.testing.assert_array_equal(feature_space_normalized, self.feature_space_normalized_one_gram_abb_abaaa)
 
     def test_one_y_with_one_half_weight_compute_one_gram_weights_returns_expected_weights(self):
         self.feature_space_builder_patch.start().return_value = self.feature_space_one_gram_abb
         feature_space = NGramFeatureSpace(self.alphabet, n=1, Y=self.abb, is_normalized=False)
 
-        n_gram_weights = feature_space.compute_weights(y_weights=numpy.array([0.5]))
+        n_gram_weights = feature_space.compute_weights(y_weights=np.array([0.5]))
 
-        numpy.testing.assert_array_equal(n_gram_weights, self.one_gram_weights_one_half_abb)
+        np.testing.assert_array_equal(n_gram_weights, self.one_gram_weights_one_half_abb)
 
     def test_one_y_with_one_half_weight_compute_two_gram_weights_returns_expected_weights(self):
         self.feature_space_builder_patch.start().return_value = self.feature_space_two_gram_abb
         feature_space = NGramFeatureSpace(self.alphabet, n=2, Y=self.abb, is_normalized=False)
 
-        n_gram_weights = feature_space.compute_weights(y_weights=numpy.array([0.5]))
+        n_gram_weights = feature_space.compute_weights(y_weights=np.array([0.5]))
 
-        numpy.testing.assert_array_equal(n_gram_weights, self.two_gram_weights_one_half_abb)
+        np.testing.assert_array_equal(n_gram_weights, self.two_gram_weights_one_half_abb)
 
     def test_two_y_with_different_weights_compute_two_gram_weights_returns_expected_weights(self):
         self.feature_space_builder_patch.start().return_value = self.feature_space_two_gram_abb_abaaa
         feature_space = NGramFeatureSpace(self.alphabet, n=2, Y=self.abb_abaaa, is_normalized=False)
 
-        n_gram_weights = feature_space.compute_weights(y_weights=numpy.array([0.5, 1]))
+        n_gram_weights = feature_space.compute_weights(y_weights=np.array([0.5, 1]))
 
-        numpy.testing.assert_array_equal(n_gram_weights, self.two_gram_weights_one_half_abb_one_abaaa)
+        np.testing.assert_array_equal(n_gram_weights, self.two_gram_weights_one_half_abb_one_abaaa)
 
     def test_compute_n_gram_weights_does_not_change_feature_space(self):
         self.feature_space_builder_patch.start().return_value = self.feature_space_one_gram_abb
         feature_space = NGramFeatureSpace(self.alphabet, n=1, Y=self.abb, is_normalized=False)
 
-        feature_space.compute_weights(y_weights=numpy.array([0.5]))
+        feature_space.compute_weights(y_weights=np.array([0.5]))
         n_gram_feature_space = feature_space.feature_space
 
-        numpy.testing.assert_array_equal(n_gram_feature_space.toarray(), self.feature_space_one_gram_abb.toarray())
+        np.testing.assert_array_equal(n_gram_feature_space.toarray(), self.feature_space_one_gram_abb.toarray())
 
 
 if __name__ == '__main__':

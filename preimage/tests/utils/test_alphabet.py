@@ -1,7 +1,7 @@
 __author__ = 'amelie'
 
 import unittest2
-import numpy.testing
+import numpy as np.testing
 
 from preimage.utils import alphabet
 from preimage.exceptions.n_gram import InvalidNGramLengthError
@@ -28,12 +28,12 @@ class TestAlphabet(unittest2.TestCase):
     def test_get_one_grams_returns_alphabet(self):
         n_grams = alphabet.get_n_grams(self.a_b_alphabet, n=1)
 
-        numpy.testing.assert_array_equal(n_grams, self.a_b_alphabet)
+        np.testing.assert_array_equal(n_grams, self.a_b_alphabet)
 
     def test_get_two_grams_returns_expected_two_grams(self):
         n_grams = alphabet.get_n_grams(self.a_b_alphabet, n=2)
 
-        numpy.testing.assert_array_equal(n_grams, self.two_grams)
+        np.testing.assert_array_equal(n_grams, self.two_grams)
 
     def test_get_one_gram_to_index_returns_expected_dict(self):
         n_gram_to_index = alphabet.get_n_gram_to_index(self.a_b_alphabet, n=1)
@@ -66,12 +66,12 @@ class TestAlphabet(unittest2.TestCase):
     def test_one_string_transform_strings_to_integer_returns_integer_string(self):
         Y_int = alphabet.transform_strings_to_integer_lists(self.cab, self.abc_alphabet)
 
-        numpy.testing.assert_array_equal(Y_int, self.cab_int)
+        np.testing.assert_array_equal(Y_int, self.cab_int)
 
     def test_two_strings_different_length_transform_strings_to_integer_returns_integer_strings(self):
         Y_int = alphabet.transform_strings_to_integer_lists(self.cab_aa, self.abc_alphabet)
 
-        numpy.testing.assert_array_equal(Y_int, self.cab_aa_int)
+        np.testing.assert_array_equal(Y_int, self.cab_aa_int)
 
 
 if __name__ == '__main__':

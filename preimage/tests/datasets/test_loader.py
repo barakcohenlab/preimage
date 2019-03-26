@@ -1,6 +1,6 @@
 __author__ = 'amelie'
 
-import numpy
+import numpy as np
 import unittest2
 
 from preimage.datasets import loader
@@ -77,12 +77,12 @@ class TestLoader(unittest2.TestCase):
     def test_load_amino_acids_returns_expected_amino_acids(self):
         amino_acids, descriptors = loader.load_amino_acids_and_descriptors(self.amino_acid_file)
 
-        numpy.testing.assert_array_equal(amino_acids, self.amino_acids)
+        np.testing.assert_array_equal(amino_acids, self.amino_acids)
 
     def test_load_amino_acid_descriptors_returns_expected_descriptors(self):
         amino_acids, descriptors = loader.load_amino_acids_and_descriptors(self.amino_acid_file)
 
-        numpy.testing.assert_array_equal(descriptors, self.amino_acid_descriptors)
+        np.testing.assert_array_equal(descriptors, self.amino_acid_descriptors)
 
 
 if __name__ == '__main__':

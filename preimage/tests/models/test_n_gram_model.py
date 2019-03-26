@@ -1,8 +1,8 @@
 __author__ = 'amelie'
 
 import unittest2
-import numpy
-import numpy.testing
+import numpy as np
+import numpy as np.testing
 from mock import patch, Mock
 
 from preimage.models.n_gram_model import NGramModel
@@ -23,26 +23,26 @@ class TestNGramModel(unittest2.TestCase):
         self.alphabet = ['a', 'b', 'c']
         self.model_with_length = NGramModel(self.alphabet, n=1, is_using_length=True)
         self.model_no_length = NGramModel(self.alphabet, n=1, is_using_length=False)
-        self.Y_weights = numpy.array([[1], [0]])
+        self.Y_weights = np.array([[1], [0]])
         self.y_lengths = [1, 2]
 
     def setup_fit_parameters(self):
         self.max_train_length = 2
         self.min_train_length = 1
-        self.weights = numpy.array([[1, 2]])
-        self.gram_matrix = numpy.array([[1, 0], [0, 1]])
+        self.weights = np.array([[1, 2]])
+        self.gram_matrix = np.array([[1, 0], [0, 1]])
         self.fit_parameters = InferenceFitParameters(self.weights, self.gram_matrix, Y=['a', 'ab'],
                                                      y_lengths=[1, 2])
 
     def setup_feature_space(self):
-        self.n_gram_weights = numpy.array([0, 1, 0], dtype=numpy.float64)
+        self.n_gram_weights = np.array([0, 1, 0], dtype=np.float64)
         self.feature_space_mock = Mock()
         self.feature_space_mock.compute_weights.return_value = self.n_gram_weights
         self.feature_space_patch = patch('preimage.models.n_gram_model.NGramFeatureSpace')
         self.feature_space_patch.start().return_value = self.feature_space_mock
 
     def setup_graph_builder(self):
-        self.graph = numpy.array([[0, 1, 1], [2, 3, 1]], dtype=numpy.float64)
+        self.graph = np.array([[0, 1, 1], [2, 3, 1]], dtype=np.float64)
         self.graph_builder_mock = Mock()
         self.graph_builder_mock.build_graph.return_value = self.graph
         self.graph_builder_path = patch('preimage.models.n_gram_model.GraphBuilder')
@@ -63,7 +63,7 @@ class TestNGramModel(unittest2.TestCase):
 
         Y = self.model_with_length.predict(self.Y_weights, y_lengths=self.y_lengths)
 
-        numpy.testing.assert_array_equal(Y, self.Y_test_with_length)
+        np.testing.assert_array_equal(Y, self.Y_test_with_length)
 
     def test_model_with_length_predict_sends_correct_parameters_to_feature_space(self):
         self.model_with_length.fit(self.fit_parameters)
@@ -84,7 +84,7 @@ class TestNGramModel(unittest2.TestCase):
 
         Y = self.model_no_length.predict(self.Y_weights, y_lengths=self.y_lengths)
 
-        numpy.testing.assert_array_equal(Y, self.Y_test_no_length)
+        np.testing.assert_array_equal(Y, self.Y_test_no_length)
 
     def test_model_no_length_predict_sends_correct_parameters_to_feature_space(self):
         self.model_no_length.fit(self.fit_parameters)
