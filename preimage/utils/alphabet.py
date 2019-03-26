@@ -1,4 +1,4 @@
-__author__ = 'amelie'
+__author__ = "amelie"
 
 from itertools import product
 
@@ -8,8 +8,9 @@ from preimage.exceptions.n_gram import InvalidNGramLengthError
 
 
 class Alphabet:
-    latin = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
-             'v', 'w', 'x', 'y', 'z']
+    latin = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u",
+             "v", "w", "x", "y", "z"]
+    dna = ["A", "C", "G", "T"]
 
 
 def get_n_gram_to_index(alphabet, n):
@@ -30,7 +31,7 @@ def get_n_grams(alphabet, n):
     n = int(n)
     if n <= 0:
         raise InvalidNGramLengthError(n)
-    n_grams = [''.join(n_gram) for n_gram in product(alphabet, repeat=n)]
+    n_grams = ["".join(n_gram) for n_gram in product(alphabet, repeat=n)]
     return n_grams
 
 
