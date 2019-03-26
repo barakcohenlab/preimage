@@ -11,13 +11,13 @@ def generate_all_six_files(mat_type):
 
     Returns
     -------
-    similarity_files : list
-        File names for the 6 similarity matrices.
+    similarity_files : dict, {str: str}
+        Keys are types of shape comparisons, values are the filenames.
 
     """
     prefix = "dnaShapeSimilarity"
-    similarity_files = ["LeftToLeft", "LefttoMid", "LeftToRight", "MidToMid", "MidToRight", "RightToRight"]
-    similarity_files = [f"{prefix}{i}{mat_type}.txt" for i in similarity_files]
+    similarity_keys = ["LeftToLeft", "LefttoMid", "LeftToRight", "MidToMid", "MidToRight", "RightToRight"]
+    similarity_files = {i: f"{prefix}{i}{mat_type}.txt" for i in similarity_keys}
     return similarity_files
 
 
@@ -27,10 +27,12 @@ class DnaShapeFiles:
 
     Attributes
     ----------
-    dna_shape_core : list
+    dna_shape_core : dict, {str: str}
         File names for the 6 similarity matrices for the 4 core DNA shape parameters: MGW, ProT, HelT, Roll.
-    dna_shape_full : list
+        Keys are types of shape comparisons, values are the filenames.
+    dna_shape_full : dict, {str: str}
         File names for the 6 similarity matrices for the full set of 14 DNA shape parameters.
+        Keys are types of shape comparisons, values are the filenames.
     """
     dna_shape_core = generate_all_six_files("Core")
     dna_shape_full = generate_all_six_files("Full")
