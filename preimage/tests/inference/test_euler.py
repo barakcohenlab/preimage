@@ -1,7 +1,7 @@
 __author__ = 'amelie'
 
 import unittest2
-import numpy as np.testing
+import numpy.testing
 from mock import patch
 
 from preimage.inference.euler import EulerianPath
@@ -11,7 +11,7 @@ from preimage.exceptions.shape import InvalidShapeError
 
 class TestEulerianPath(unittest2.TestCase):
     def setUp(self):
-        np.random.seed(42)
+        numpy.random.seed(42)
         self.setup_alphabet()
         self.setup_weights()
         self.setup_thresholds()
@@ -32,27 +32,27 @@ class TestEulerianPath(unittest2.TestCase):
         self.index_to_n_gram_patch.start().return_value = self.index_to_two_gram
 
     def setup_weights(self):
-        self.a_b_c_weights = np.array([1., 1., 1.])
-        self.ab_weights = np.array([0, 1., 0, 0, 0, 0, 0, 0, 0])
-        self.ab_ca_weights = np.array([0, 1., 0, 0, 0, 0, 1., 0, 0])
-        self.ab_ba_ca_weights = np.array([0, 1., 0, 1., 0, 0, 1., 0, 0])
-        self.ab_bb_cc_weights = np.array([0, 1., 0, 0, 1., 0, 0, 0, 1.])
-        self.ab_ba_bb_weights = np.array([0, 1., 0, 1., 1., 0, 0, 0, 0])
-        self.aa_aa_bc_cc_cb_weights = np.array([2., 0, 0, 0., 0, 1., 0, 1., 1.])
-        self.aa_ab_ac_weights = np.array([1., 1., 1., 0., 0, 0, 0, 0, 0])
-        self.aab_weights = np.array([0, 1., 0, 0., 0, 0, 0, 0])
-        self.aab_aab_weights = np.array([0, 2., 0, 0., 0, 0, 0, 0])
-        self.aaa_bbb_weights = np.array([2., 0., 0, 0., 0, 0, 0, 2.])
-        self.bc_cc_non_rounded_weights = np.array([0, 0, 0, 0, 0, 0.6, 0, 0, 1.5])
-        self.bb_bc_non_rounded_weights = np.array([0, 0, 0, 0, 0.4, 0.6, 0, 0, 0])
-        self.bb_bb_non_rounded_weights = np.array([0, 0, 0, 0, 0.6, 0.1, 0, 0, 0])
+        self.a_b_c_weights = numpy.array([1., 1., 1.])
+        self.ab_weights = numpy.array([0, 1., 0, 0, 0, 0, 0, 0, 0])
+        self.ab_ca_weights = numpy.array([0, 1., 0, 0, 0, 0, 1., 0, 0])
+        self.ab_ba_ca_weights = numpy.array([0, 1., 0, 1., 0, 0, 1., 0, 0])
+        self.ab_bb_cc_weights = numpy.array([0, 1., 0, 0, 1., 0, 0, 0, 1.])
+        self.ab_ba_bb_weights = numpy.array([0, 1., 0, 1., 1., 0, 0, 0, 0])
+        self.aa_aa_bc_cc_cb_weights = numpy.array([2., 0, 0, 0., 0, 1., 0, 1., 1.])
+        self.aa_ab_ac_weights = numpy.array([1., 1., 1., 0., 0, 0, 0, 0, 0])
+        self.aab_weights = numpy.array([0, 1., 0, 0., 0, 0, 0, 0])
+        self.aab_aab_weights = numpy.array([0, 2., 0, 0., 0, 0, 0, 0])
+        self.aaa_bbb_weights = numpy.array([2., 0., 0, 0., 0, 0, 0, 2.])
+        self.bc_cc_non_rounded_weights = numpy.array([0, 0, 0, 0, 0, 0.6, 0, 0, 1.5])
+        self.bb_bc_non_rounded_weights = numpy.array([0, 0, 0, 0, 0.4, 0.6, 0, 0, 0])
+        self.bb_bb_non_rounded_weights = numpy.array([0, 0, 0, 0, 0.6, 0.1, 0, 0, 0])
 
     def setup_thresholds(self):
-        self.thresholds = np.arange(1, 10)
-        self.high_tresholds = np.arange(5, 14)
-        self.wrong_thresholds = np.array([1, 2, 3])
-        self.ac_threshold_weights = np.array([0, 1., 4., 2., 0, 0, 3., 1., 0])
-        self.aa_ac_threshold_weights = np.array([1.5, 1., 4., 2., 0, 0, 1., 1., 0])
+        self.thresholds = numpy.arange(1, 10)
+        self.high_tresholds = numpy.arange(5, 14)
+        self.wrong_thresholds = numpy.array([1, 2, 3])
+        self.ac_threshold_weights = numpy.array([0, 1., 4., 2., 0, 0, 3., 1., 0])
+        self.aa_ac_threshold_weights = numpy.array([1.5, 1., 4., 2., 0, 0, 1., 1., 0])
 
     def test_one_n_gram_find_eulerian_path_returns_n_gram(self):
         y = self.eulerian_path_algorithm.find_eulerian_path(self.ab_weights, y_length=2)

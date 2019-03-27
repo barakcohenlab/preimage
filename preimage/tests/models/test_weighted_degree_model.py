@@ -1,8 +1,8 @@
 __author__ = 'amelie'
 
 import unittest2
-import numpy as np
-import numpy as np.testing
+import numpy
+import numpy.testing
 from mock import patch, Mock
 
 from preimage.models.weighted_degree_model import WeightedDegreeModel
@@ -24,8 +24,8 @@ class TestWeightedDegreeModel(unittest2.TestCase):
     def setup_fit_parameters(self):
         self.max_train_length = 2
         self.min_train_length = 1
-        self.weights = np.array([[1, 2]])
-        self.gram_matrix = np.array([[1, 0], [0, 1]])
+        self.weights = numpy.array([[1, 2]])
+        self.gram_matrix = numpy.array([[1, 0], [0, 1]])
         self.fit_parameters = InferenceFitParameters(self.weights, self.gram_matrix, Y=['a', 'ab'],
                                                      y_lengths=[1, 2])
         self.fit_parameters_no_length = InferenceFitParameters(self.weights, self.gram_matrix, Y=['a', 'ab'],
@@ -70,7 +70,7 @@ class TestWeightedDegreeModel(unittest2.TestCase):
 
         Y = self.model_with_length.predict(self.Y_weights, y_lengths=self.y_lengths)
 
-        np.testing.assert_array_equal(Y, self.Y_test_with_length)
+        numpy.testing.assert_array_equal(Y, self.Y_test_with_length)
 
     def test_model_with_length_predict_sends_correct_parameters_to_feature_space(self):
         self.model_with_length.fit(self.fit_parameters)
@@ -91,7 +91,7 @@ class TestWeightedDegreeModel(unittest2.TestCase):
 
         Y = self.model_no_length.predict(self.Y_weights, y_lengths=self.y_lengths)
 
-        np.testing.assert_array_equal(Y, self.Y_test_no_length)
+        numpy.testing.assert_array_equal(Y, self.Y_test_no_length)
 
     def test_model_no_length_predict_sends_correct_parameters_to_feature_space(self):
         self.model_no_length.fit(self.fit_parameters)
