@@ -1,6 +1,7 @@
 __author__ = 'amelie'
 
 import numpy as np
+from abc import ABC, abstractmethod
 
 from preimage.datasets.loader import load_amino_acids_and_descriptors
 from preimage.kernels._generic_string import element_wise_generic_string_kernel, generic_string_kernel_with_sigma_c
@@ -40,7 +41,149 @@ def element_wise_kernel(X, sigma_position, n, alphabet):
     return kernel
 
 
-class GenericStringKernel:
+class BaseGenericStringKernel(ABC):
+    """Abstract base class for generic string kernel.
+
+    Contains attributes and methods that are common to all generic string kernels. The base sets up the
+    infrastructure for computing the similarity between two strings by comparing each of their l-gram of length 1 to
+    n. The comparison depends on the physical similarity of the respective l-grams and a shifting contribution term
+    that decays exponentially rapidly with the distance between the starting position. Due to difference between DNA
+    and protein, the physical similarity computation will differ and get implemented in derived classes.
+
+    Attributes
+    ----------
+    properties_file_name : (abstract) string or list
+        Name of the file containing the amino acid substitution matrix or list of file names with DNA shape
+        similarities.
+    sigma_position : float
+        Controls the penalty incurred when two n-grams are not sharing the same position.
+    sigma_physical : float
+        Controls the penalty incurred when the encoding vectors of two sequences differ.
+    n : int
+        N-gram length.
+    is_normalized : bool
+        True if the kernel should be normalized, False otherwise.
+    """
+    @property
+    @abstractmethod
+    def properties_file_name(self):
+        """An abstract attribute that must be implemented in derived classes. This attribute indicates the file name(s)
+        for physical properties of the alphabet. Due to differences in DNA and amino acid, the usage of this
+        attribute will vary.
+        """
+        raise NotImplementedError
+
+    def __init__(self, sigma_position=1.0, sigma_physical=1.0, n=2, is_normalized=True):
+        self.sigma_position = sigma_position
+        self.sigma_physical = sigma_physical
+        self.n = n
+        self.is_normalized = is_normalized
+
+    @abstractmethod
+    def __call__(self, X1, X2):
+        """An abstract method for calling the kernel.
+
+        Parameters
+        ----------
+        X1 : array, shape=[n_samples, ]
+            Strings, where n_samples is the number of samples in X1.
+        X2 : array, shape=[n_samples, ]
+            Strings, where n_samples is the number of samples in X2.
+
+        """
+        raise NotImplementedError
+
+    def get_position_matrix(self, max_length):
+        """Compute the position similarity weights
+
+        Parameters
+        ----------
+        max_length : int
+            Maximum position.
+
+        Returns
+        -------
+        position_matrix : array, shape = [max_length, max_length]
+            Similarity of each position with all the other positions.
+        """
+        position_matrix = compute_position_weights_matrix(max_length, self.sigma_position)
+        return position_matrix
+
+    def _get_lengths(self, X1, X2):
+        """Get the length of every sequence in both datasets.
+
+        Parameters
+        ----------
+        X1 : array, shape=[n_samples, ]
+            Strings, where n_samples is the number of samples in X1.
+        X2 : array, shape=[n_samples, ]
+            Strings, where n_samples is the number of samples in X2.
+
+        Returns
+        -------
+        max_length : int
+            Length of the longest sequence in either X1 or X2
+        x1_lengths : array, shape=[n_samples, ]
+            ints representing the length of each sample in X1, where n_samples is the number of samples in X1.
+        x2_lengths : array, shape=[n_samples, ]
+            ints representing the length of each sample in X1, where n_samples is the number of samples in X2.
+
+        """
+        x1_lengths = np.array([len(x) for x in X1], dtype=np.int64)
+        x2_lengths = np.array([len(x) for x in X2], dtype=np.int64)
+        max_length = max(np.max(x1_lengths), np.max(x2_lengths))
+        return max_length, x1_lengths, x2_lengths
+
+    @abstractmethod
+    def _normalize(self, gram_matrix, X1, x1_lengths, X2, x2_lengths, position_matrix, similarity_matrix, is_symmetric):
+        """Normalize the Gram matrix (kernel) based on the self-similarity of X1 and X2.
+
+        Parameters
+        ----------
+        gram_matrix : array, shape = [n_samples_x1, n_samples_x2]
+            Similarity of each string of X1 with each string of X2, n_samples_x1 is the number of samples in X1 and
+            n_samples_x2 is the number of samples in X2.
+        X1 : array, shape=[n_samples, ]
+            Strings, where n_samples is the number of samples in X1.
+        x1_lengths : array, shape=[n_samples, ]
+            ints representing the length of each sample in X1, where n_samples is the number of samples in X1.
+        X2 : array, shape=[n_samples, ]
+            Strings, where n_samples is the number of samples in X2.
+        x2_lengths : array, shape=[n_samples, ]
+            ints representing the length of each sample in X1, where n_samples is the number of samples in X2.
+        position_matrix : array, shape = [max_length, max_length]
+            Similarity of each position with all the other positions.
+        similarity_matrix : array, shape = [n_alphabet, n_alphabet] OR list of such matrices
+            Pairwise physical similarities of alphabet.
+        is_symmetric : bool
+            Indicates if the Gram matrix is symmetric or not.
+
+        Returns
+        -------
+        gram_matrix : array, shape = [n_samples_x1, n_samples_x2]
+            The normalized Gram matrix.
+
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def element_wise_kernel(self, X):
+        """Compute the similarity of each string of X with itself in the Generic String kernel.
+
+        Parameters
+        ----------
+        X : array, shape = [n_samples]
+            Strings, where n_samples is the number of examples in X.
+
+        Returns
+        -------
+        kernel : array, shape = [n_samples]
+            Similarity of each string with itself in the GS kernel, where n_samples is the number of examples in X.
+        """
+        raise NotImplementedError
+
+
+class GenericStringKernel(BaseGenericStringKernel):
     """Generic String Kernel.
 
     Computes the similarity between two strings by comparing each of their l-gram of length 1 to n. Each l-gram
@@ -49,19 +192,6 @@ class GenericStringKernel:
     substrings. The sigma_position parameter controls the shifting contribution term. The sigma_amino_acid parameter
     controls the amount of penalty incurred when the encoding vectors differ as measured by the squared Euclidean
     distance between these two vectors. The GS kernel outputs the sum of all the l-gram-comparison scores.
-
-    Attributes
-    ----------
-    amino_acid_file_name : string
-        Name of the file containing the amino acid substitution matrix.
-    sigma_position : float
-        Controls the penalty incurred when two n-grams are not sharing the same position.
-    sigma_amino_acid : float
-        Controls the penalty incurred when the encoding vectors of two amino acids differ.
-    n : int
-        N-gram length.
-    is_normalized : bool
-        True if the kernel should be normalized, False otherwise.
 
     Notes
     -----
@@ -73,13 +203,15 @@ class GenericStringKernel:
        peptide-protein binding affinity predictor with kernel ridge regression." BMC bioinformatics 14, no. 1 (2013):
        82.
     """
+    @property
+    def properties_file_name(self):
+        return self._properties_file_name
+
     def __init__(self, amino_acid_file_name=AminoAcidFile.blosum62_natural, sigma_position=1.0, sigma_amino_acid=1.0,
                  n=2, is_normalized=True):
-        self.amino_acid_file_name = amino_acid_file_name
-        self.sigma_position = sigma_position
-        self.sigma_amino_acid = sigma_amino_acid
-        self.n = n
-        self.is_normalized = is_normalized
+        super().__init__(sigma_position=sigma_position, sigma_physical=sigma_amino_acid, n=n,
+                         is_normalized=is_normalized)
+        self._properties_file_name = amino_acid_file_name
         self.alphabet, self.descriptors = self._load_amino_acids_and_normalized_descriptors()
 
     def __call__(self, X1, X2):
@@ -112,22 +244,6 @@ class GenericStringKernel:
                                       amino_acid_similarity_matrix, is_symmetric)
         return gram_matrix
 
-    def get_position_matrix(self, max_length):
-        """Compute the position similarity weights
-
-        Parameters
-        ----------
-        max_length : int
-            Maximum position.
-
-        Returns
-        -------
-        position_matrix : array, shape = [max_length, max_length]
-            Similarity of each position with all the other positions.
-        """
-        position_matrix = compute_position_weights_matrix(max_length, self.sigma_position)
-        return position_matrix
-
     def get_alphabet_similarity_matrix(self):
         """Compute the alphabet similarity weights
 
@@ -143,22 +259,16 @@ class GenericStringKernel:
                 distance = descriptor_one - descriptor_two
                 squared_distance = np.dot(distance, distance)
                 distance_matrix[index_one, index_two] = squared_distance
-        distance_matrix /= 2. * (self.sigma_amino_acid ** 2)
+        distance_matrix /= 2. * (self.sigma_physical ** 2)
         return np.exp(-distance_matrix)
 
     def _load_amino_acids_and_normalized_descriptors(self):
-        amino_acids, descriptors = load_amino_acids_and_descriptors(self.amino_acid_file_name)
+        amino_acids, descriptors = load_amino_acids_and_descriptors(self.properties_file_name)
         normalization = np.array([np.dot(descriptor, descriptor) for descriptor in descriptors],
                                     dtype=np.float)
         normalization = normalization.reshape(-1, 1)
         descriptors /= np.sqrt(normalization)
         return amino_acids, descriptors
-
-    def _get_lengths(self, X1, X2):
-        x1_lengths = np.array([len(x) for x in X1], dtype=np.int64)
-        x2_lengths = np.array([len(x) for x in X2], dtype=np.int64)
-        max_length = max(np.max(x1_lengths), np.max(x2_lengths))
-        return max_length, x1_lengths, x2_lengths
 
     def _normalize(self, gram_matrix, X1, x1_lengths, X2, x2_lengths, position_matrix, similarity_matrix, is_symmetric):
         if self.is_normalized:
