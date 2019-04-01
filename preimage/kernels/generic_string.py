@@ -3,10 +3,11 @@ __author__ = 'amelie'
 import numpy as np
 from abc import ABC, abstractmethod
 
-from preimage.datasets.loader import load_amino_acids_and_descriptors
+from preimage.datasets.loader import load_amino_acids_and_descriptors, load_dna_pentamers_and_shape_similarity
 from preimage.kernels._generic_string import element_wise_generic_string_kernel, generic_string_kernel_with_sigma_c
 from preimage.kernels._generic_string import element_wise_generic_string_kernel_with_sigma_c
 from preimage.datasets.amino_acid_file import AminoAcidFile
+from preimage.datasets.dna_shape_files import DnaShapeFiles
 from preimage.utils.position import compute_position_weights_matrix
 from preimage.utils.alphabet import transform_strings_to_integer_lists
 
@@ -52,9 +53,9 @@ class BaseGenericStringKernel(ABC):
 
     Attributes
     ----------
-    properties_file_name : (abstract) string or list
-        Name of the file containing the amino acid substitution matrix or list of file names with DNA shape
-        similarities.
+    properties_file_name : (abstract) string or dictionary
+        Name of the file containing the amino acid substitution matrix or mapping of DNA shape similarity comparisons
+        to the file name that has that comparison.
     sigma_position : float
         Controls the penalty incurred when two n-grams are not sharing the same position.
     sigma_physical : float
@@ -305,3 +306,40 @@ class GenericStringKernel(BaseGenericStringKernel):
         kernel = element_wise_generic_string_kernel_with_sigma_c(X_int, x_lengths, position_matrix, similarity_matrix,
                                                                  self.n)
         return kernel
+
+
+    class GenericStringDnaKernel(BaseGenericStringKernel):
+        """Generic String Kernel for DNA shape similarity.
+
+        Computes the similarity between two strings of DNA sequence based on pre-computed similarity tables. Due to
+        edge cases with base step parameters, multiple similarity tables are necessary. These tables are stored as a
+        dictionary with the attribute properties_file_name. Most comparisons use the MidToMid table, but edge cases
+        are necessary when using the left-most and right-most pentamer of a sequence.
+        """
+        @property
+        def properties_file_name(self):
+            """Get a dictionary containing the DNA shape similarity tables.
+
+            Returns
+            -------
+            _properties_file_name : dict, {str: str}
+                Keys are the types of DNA shape comparisons, values are the names of the corresponding files.
+            """
+            return self._properties_file_name
+
+        def __init__(self, shape_similarity_file_dict=DnaShapeFiles.dna_shape_core, sigma_position=1.0,
+                     sigma_physical=1.0, n=5, is_normalized=True):
+            super().__init__(sigma_position=sigma_position, sigma_physical=sigma_physical, n=n,
+                             is_normalized=is_normalized)
+            self._properties_file_name = shape_similarity_file_dict
+            self.alphabet, self.similarity_tables_dict = load_dna_pentamers_and_shape_similarity(
+                self.properties_file_name)
+
+        def __call__(self, X1, X2):
+            pass
+
+        def _normalize(self, gram_matrix, X1, x1_lengths, X2, x2_lengths, position_matrix, similarity_matrix, is_symmetric):
+            pass
+
+        def element_wise_kernel(self, X):
+            pass
