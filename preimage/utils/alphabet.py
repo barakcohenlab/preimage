@@ -64,6 +64,7 @@ def transform_dna_to_pentamer_integer_lists(Y, alphabet):
     """
     window_size = 5
     pentamer_to_int = get_n_gram_to_index(alphabet, 1)
+    n_pentamers = len(pentamer_to_int.keys())
     n_examples = np.array(Y).shape[0]
     max_length = np.max([len(y) for y in Y]) - window_size + 1
 
@@ -73,10 +74,13 @@ def transform_dna_to_pentamer_integer_lists(Y, alphabet):
         # Indexing for the beginning of each pentamer
         for letter_index in range(len(y) - window_size + 1):
             pentamer = y[letter_index:letter_index+window_size]
-            if pentamer not in pentamer_to_int.keys():
+            if pentamer in pentamer_to_int.keys():
+                Y_int[y_index, letter_index] = pentamer_to_int[pentamer]
+            # If reverse complimentation is necessary, add the number of pentamers in the alphabet to the int value
+            # of the reverse compliment. This will help with handling edge cases in computing the kernel.
+            else:
                 pentamer = reverse_compliment(pentamer)
-
-            Y_int[y_index, letter_index] = pentamer_to_int[pentamer]
+                Y_int[y_index, letter_index] = pentamer_to_int[pentamer] + n_pentamers
 
     return Y_int
 
