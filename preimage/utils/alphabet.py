@@ -1,5 +1,6 @@
 __author__ = "amelie"
 
+import warnings
 from itertools import product
 
 import numpy as np
@@ -44,3 +45,55 @@ def transform_strings_to_integer_lists(Y, alphabet):
         for letter_index, letter in enumerate(y):
             Y_int[y_index, letter_index] = letter_to_int[letter]
     return Y_int
+
+
+def transform_dna_to_pentamer_integer_lists(Y, alphabet):
+    """Convert a DNA sequence into a list of ints, using a sliding window of 5. If a pentamer is not in the alphabet, then its reverse compliment must be in the alphabet.
+
+    Parameters
+    ----------
+    Y : array-like
+        The DNA sequences to convert.
+    alphabet : array, shape = [512, ]
+        Corresponding to the 512 DNA pentamers with unique DNA shape properties.
+
+    Returns
+    -------
+    Y_int : array, shape = [n_Y, longest_Y - 4]
+        The integer values of pentamers in each sequence. There are 4 fewer columns than the longest sequence because a sliding window is used.
+    """
+    window_size = 5
+    pentamer_to_int = get_n_gram_to_index(alphabet, 1)
+    n_examples = np.array(Y).shape[0]
+    max_length = np.max([len(y) for y in Y]) - window_size + 1
+
+    # Initialize the array with values of -1, which correspond to no pentamer, i.e. the end of the sequence
+    Y_int = np.full((n_examples, max_length), -1, dtype=np.int16)
+    for y_index, y in enumerate(Y):
+        # Indexing for the beginning of each pentamer
+        for letter_index in range(len(y) - window_size + 1):
+            pentamer = y[letter_index:letter_index+window_size]
+            if pentamer not in pentamer_to_int.keys():
+                pentamer = reverse_compliment(pentamer)
+
+            Y_int[y_index, letter_index] = pentamer_to_int[pentamer]
+
+    return Y_int
+
+
+def reverse_compliment(sequence):
+    compliment_dict = {
+        "A": "T",
+        "C": "G",
+        "G": "C",
+        "T": "A"
+    }
+    new_sequence = ""
+    for base in sequence[::-1]:
+        if base in compliment_dict.keys():
+            new_sequence += compliment_dict[base]
+        else:
+            warnings.warn(f"Didn't recognize nucleotide {base}, using an N to reverse compliment.")
+            new_sequence += "N"
+
+    return new_sequence
