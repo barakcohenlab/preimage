@@ -1,12 +1,12 @@
 import cython
-import numpy
-cimport numpy
+import numpy as np
+cimport numpy as np
 from cpython cimport bool
 
 
-ctypedef numpy.float64_t FLOAT64_t
-ctypedef numpy.int8_t INT8_t
-ctypedef numpy.int64_t INT64_t
+ctypedef np.float64_t FLOAT64_t
+ctypedef np.int8_t INT8_t
+ctypedef np.int64_t INT64_t
 
 
 cdef inline INT64_t int_min(INT64_t a, INT64_t b): return a if a <= b else b
@@ -17,10 +17,10 @@ cdef inline INT64_t int_min(INT64_t a, INT64_t b): return a if a <= b else b
 cpdef element_wise_generic_string_kernel(INT8_t[:, ::1] X, INT64_t[::1] x_lengths, FLOAT64_t[:, ::1] position_matrix,
                                          INT64_t n):
     cdef int i
-    cdef FLOAT64_t[::1] kernel = numpy.empty(X.shape[0], dtype=numpy.float64)
+    cdef FLOAT64_t[::1] kernel = np.empty(X.shape[0], dtype=np.float64)
     for i in range(X.shape[0]):
         kernel[i] = generic_string_non_blended_similarity(X[i], x_lengths[i], X[i], x_lengths[i], position_matrix, n)
-    return numpy.asarray(kernel)
+    return np.asarray(kernel)
 
 
 @cython.boundscheck(False)
@@ -45,7 +45,7 @@ cpdef generic_string_kernel_with_sigma_c(INT8_t[:,::1] X1, INT64_t[::1] x1_lengt
                                          INT64_t[::1] x2_lengths, FLOAT64_t[:,::1] position_matrix,
                                          FLOAT64_t[:,::1] similarity_matrix, INT64_t n, bool symmetric):
     cdef int i,j
-    cdef FLOAT64_t[:,::1] gram_matrix = numpy.zeros((X1.shape[0], X2.shape[0]), dtype=numpy.float64)
+    cdef FLOAT64_t[:,::1] gram_matrix = np.zeros((X1.shape[0], X2.shape[0]), dtype=np.float64)
 
     if symmetric:
         for i in range(X1.shape[0]):
@@ -63,7 +63,7 @@ cpdef generic_string_kernel_with_sigma_c(INT8_t[:,::1] X1, INT64_t[::1] x1_lengt
                 gram_matrix[i, j] = generic_string_kernel_similarity_with_sigma_c(X1[i], x1_lengths[i], X2[j], 
                                                                                   x2_lengths[j], position_matrix, 
                                                                                   similarity_matrix, n)
-    return numpy.asarray(gram_matrix)
+    return np.asarray(gram_matrix)
 
 
 @cython.boundscheck(False)
@@ -95,8 +95,8 @@ cpdef element_wise_generic_string_kernel_with_sigma_c(INT8_t[:,::1] X, INT64_t[:
                                                       FLOAT64_t[:,::1] position_matrix,
                                                       FLOAT64_t[:,::1] similarity_matrix, INT64_t n):
     cdef int i
-    cdef FLOAT64_t[::1] kernel = numpy.empty(X.shape[0], dtype=numpy.float64)
+    cdef FLOAT64_t[::1] kernel = np.empty(X.shape[0], dtype=np.float64)
     for i in range(X.shape[0]):
         kernel[i] = generic_string_kernel_similarity_with_sigma_c(X[i], x_lengths[i], X[i], x_lengths[i],
                                                                   position_matrix, similarity_matrix, n)
-    return numpy.asarray(kernel)
+    return np.asarray(kernel)
