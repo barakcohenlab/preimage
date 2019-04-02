@@ -9,7 +9,7 @@ from preimage.kernels._generic_string import element_wise_generic_string_kernel_
 from preimage.datasets.amino_acid_file import AminoAcidFile
 from preimage.datasets.dna_shape_files import DnaShapeFiles
 from preimage.utils.position import compute_position_weights_matrix
-from preimage.utils.alphabet import transform_strings_to_integer_lists
+from preimage.utils.alphabet import transform_strings_to_integer_lists, transform_dna_to_pentamer_integer_lists
 
 
 def element_wise_kernel(X, sigma_position, n, alphabet):
@@ -336,7 +336,34 @@ class GenericStringKernel(BaseGenericStringKernel):
                 self.properties_file_name)
 
         def __call__(self, X1, X2):
-            pass
+            """Compute the similarity of all the strings of X1 with all the strings of X2.
+
+            Parameters
+            ----------
+            X1 : array, shape=[n_samples, ]
+                Strings, where n_samples is the number of samples in X1.
+            X2 : array, shape=[n_samples, ]
+                Strings, where n_samples is the number of samples in X2.
+
+            Returns
+            -------
+            gram_matrix : array, shape = [n_samples_x1, n_samples_x2]
+                Similarity of each string of X1 with each string of X2, n_samples_x1 is the number of samples in X1 and
+                n_samples_x2 is the number of samples in X2.
+            """
+            X1 = np.array(X1)
+            X2 = np.array(X2)
+            is_symmetric = bool(X1.shape == X2.shape and np.all(X1 == X2))
+            max_length, x1_lengths, x2_lengths = self._get_lengths(X1, X2)
+            position_matrix = self.get_position_matrix(max_length)
+            X1_int = transform_dna_to_pentamer_integer_lists(X1, self.alphabet)
+            X2_int = transform_dna_to_pentamer_integer_lists(X2, self.alphabet)
+            gram_matrix = generic_string_dna_kernel_with_sigma_c(X1_int, x1_lengths, X2_int, x2_lengths,
+                                                                 position_matrix, self.properties_file_name, self.n,
+                                                                 is_symmetric)
+            gram_matrix = self._normalize(gram_matrix, X1_int, x1_lengths, X2_int, x2_lengths, position_matrix,
+                                          self.properties_file_name, is_symmetric)
+            return gram_matrix
 
         def _normalize(self, gram_matrix, X1, x1_lengths, X2, x2_lengths, position_matrix, similarity_matrix, is_symmetric):
             pass
