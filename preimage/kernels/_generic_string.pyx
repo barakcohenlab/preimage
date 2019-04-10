@@ -100,3 +100,32 @@ cpdef element_wise_generic_string_kernel_with_sigma_c(INT8_t[:,::1] X, INT64_t[:
         kernel[i] = generic_string_kernel_similarity_with_sigma_c(X[i], x_lengths[i], X[i], x_lengths[i],
                                                                   position_matrix, similarity_matrix, n)
     return np.asarray(kernel)
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+#FIXME is this the right way to declare the types of a dict?
+cpdef generic_string_dna_kernel_with_sigma_c(INT16_t[:, ::1] X1, INT64_t[::1] x1_lengths, INT16_t[:, ::1] X2,
+                                             INT64_t[::1] x2_lengths, FLOAT64_t[:, ::1] position_matrix,
+                                             {str: FLOAT64_t[:, ::1]} similarity_matrix_dict, INT64_t n, bool symmetric):
+    cdef int i, j
+    cdef FLOAT64_t[:, ::1] gram_matrix = np.zeros((X1.shape[0], X2.shape[0]), dtype=np.float64)
+
+    if symmetric:
+        for i in range(X1.shape[0]):
+            gram_matrix[i, i] = generic_string_dna_kernel_similarity_with_sigma_c(X1[i], x1_lengths[i], X2[i],
+                                                                                  x2_lengths[i], position_matrix,
+                                                                                  similarity_matrix_dict, n)
+            for j in range(i):
+                gram_matrix[i, j] = generic_string_dna_kernel_similarity_with_sigma_c(X1[i], x1_lengths[i], X2[j],
+                                                                                      x2_lengths[j], position_matrix,
+                                                                                      similarity_matrix_dict, n)
+                gram_matrix[j, i] = gram_matrix[i, j]
+    else:
+        for i in range(X1.shape[0]):
+            for j in range(X2.shape[1]):
+                gram_matrix[i, j] = generic_string_dna_kernel_similarity_with_sigma_c(X1[i], x1_lengths[i], X2[j],
+                                                                                      x2_lengths[j], position_matrix,
+                                                                                      similarity_matrix_dict, n)
+
+    return np.asarray(gram_matrix)
