@@ -315,6 +315,10 @@ class GenericStringKernel(BaseGenericStringKernel):
         edge cases with base step parameters, multiple similarity tables are necessary. These tables are stored as a
         dictionary with the attribute properties_file_name. Most comparisons use the MidToMid table, but edge cases
         are necessary when using the left-most and right-most pentamer of a sequence.
+
+        Note that self.n is 1 by default, rather than 5, because this is the size of an n-gram from the PENTAMER
+        alphabet, not an n-gram from the DNA alphabet. Thus an n = 1 really corresponds to a DNA pentamer,
+        n = 2 corresponds to a DNA hexamer, etc.
         """
         @property
         def properties_file_name(self):
@@ -328,7 +332,7 @@ class GenericStringKernel(BaseGenericStringKernel):
             return self._properties_file_name
 
         def __init__(self, shape_similarity_file_dict=DnaShapeFiles.dna_shape_core, sigma_position=1.0,
-                     sigma_physical=1.0, n=5, is_normalized=True):
+                     sigma_physical=1.0, n=1, is_normalized=True):
             super().__init__(sigma_position=sigma_position, sigma_physical=sigma_physical, n=n,
                              is_normalized=is_normalized)
             self._properties_file_name = shape_similarity_file_dict
