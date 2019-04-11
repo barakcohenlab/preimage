@@ -206,3 +206,25 @@ cdef inline FLOAT64_t generic_string_dna_kernel_similarity_with_sigma_c(INT16_t[
                     first_ngram -= n_pentamers
                 if second_ngram >= n_pentamers:
                     second_ngram -= n_pentamers
+
+                # Now we can finally compute the similarity
+                current_similarity *= similarity_matrix_dict[comparison][x1[i + l], x2[j + l]]
+                n_gram_similarity += current_similarity
+
+            similarity += position_matrix[i, j] * n_gram_similarity
+
+    return similarity
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef element_wise_generic_string_dna_kernel_with_sigma_c(INT16_t[:, ::1] X, INT64_t[::1] x_lengths,
+                                                          FLOAT64_t[:, ::1] position_matrix,
+                                                          {str: FLOAT64_t[:, ::1]} similarity_matrix_dict, INT64_t n):
+    cdef int i
+    cdef FLOAT64_t[::1] kernel = np.empty(X.shape[0], dtype=np.float64)
+    for i in range(X.shape[0]):
+        kernel[i] = generic_string_dna_kernel_similarity_with_sigma_c(X[i], x_lengths[i], X[i], x_lengths[i],
+                                                                      position_matrix, similarity_matrix_dict, n)
+
+    return np.asarray(kernel)

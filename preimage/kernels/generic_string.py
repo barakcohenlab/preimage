@@ -362,7 +362,6 @@ class GenericStringKernel(BaseGenericStringKernel):
             position_matrix = self.get_position_matrix(max_length)
             X1_int = transform_dna_to_pentamer_integer_lists(X1, self.alphabet)
             X2_int = transform_dna_to_pentamer_integer_lists(X2, self.alphabet)
-            #FIXME note that X1_int is np.int16 whereas for AA, it is np.int8
             gram_matrix = generic_string_dna_kernel_with_sigma_c(X1_int, x1_lengths, X2_int, x2_lengths,
                                                                  position_matrix, self.similarity_tables_dict, self.n,
                                                                  is_symmetric)
@@ -389,8 +388,8 @@ class GenericStringKernel(BaseGenericStringKernel):
             ints representing the length of each sample in X2, where n_samples is the number of samples in X2.
             position_matrix : array, shape = [max_length, max_length]
             Similarity of each position with all the other positions.
-            similarity_tables : dict, {str: str}
-                Keys are the types of DNA shape comparisons, values are the names of the corresponding files.
+            similarity_tables : dict, {str: np.array}
+                Keys are the types of DNA shape comparisons, values are the corresponding similarity tables.
             is_symmetric : bool
                 Indicates if the Gram matrix is symmetric.
 
@@ -404,7 +403,6 @@ class GenericStringKernel(BaseGenericStringKernel):
                     x1_norm = gram_matrix.diagonal()
                     x2_norm = x1_norm
                 else:
-                    # FIXME note that X1_int is np.int16 whereas for AA, it is np.int8
                     x1_norm = element_wise_generic_string_dna_kernel_with_sigma_c(X1, x1_lengths, position_matrix,
                                                                                   similarity_tables, self.n)
                     x2_norm = element_wise_generic_string_dna_kernel_with_sigma_c(X2, x2_lengths, position_matrix,
