@@ -2,6 +2,7 @@ import cython
 import numpy as np
 cimport numpy as np
 from cpython cimport bool
+from libcpp.map cimport map
 
 
 ctypedef np.float64_t FLOAT64_t
@@ -107,7 +108,7 @@ cpdef element_wise_generic_string_kernel_with_sigma_c(INT8_t[:,::1] X, INT64_t[:
 #FIXME is this the right way to declare the types of a dict?
 cpdef generic_string_dna_kernel_with_sigma_c(INT16_t[:, ::1] X1, INT64_t[::1] x1_lengths, INT16_t[:, ::1] X2,
                                              INT64_t[::1] x2_lengths, FLOAT64_t[:, ::1] position_matrix,
-                                             {str: FLOAT64_t[:, ::1]} similarity_matrix_dict, INT64_t n, bool symmetric):
+                                             map[str, FLOAT64_t[:, ::1]] similarity_matrix_dict, INT64_t n, bool symmetric):
     cdef int i, j
     cdef FLOAT64_t[:, ::1] gram_matrix = np.zeros((X1.shape[0], X2.shape[0]), dtype=np.float64)
 
@@ -137,7 +138,7 @@ cpdef generic_string_dna_kernel_with_sigma_c(INT16_t[:, ::1] X1, INT64_t[::1] x1
 cdef inline FLOAT64_t generic_string_dna_kernel_similarity_with_sigma_c(INT16_t[::1] x1, INT64_t x1_length,
                                                                         INT16_t[::1] x2, INT64_t x2_length,
                                                                         FLOAT64_t[:, ::1] position_matrix,
-                                                                        {str: FLOAT64_t[:, ::1]} similarity_matrix_dict):
+                                                                        map[str, FLOAT64_t[:, ::1]] similarity_matrix_dict):
     cdef INT64_t i, j, l, max_length
     cdef FLOAT64_t similarity, current_similarity, n_gram_similarity
     cdef INT16_t n_pentamers
