@@ -7,6 +7,7 @@ from libcpp.map cimport map
 
 ctypedef np.float64_t FLOAT64_t
 ctypedef np.int8_t INT8_t
+ctypedef np.int16_t INT16_t
 ctypedef np.int64_t INT64_t
 
 
