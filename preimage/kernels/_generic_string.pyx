@@ -149,9 +149,9 @@ cdef inline FLOAT64_t generic_string_dna_kernel_similarity_with_sigma_c(INT16_t[
     # comparison is the key to use in the shape comparisons. It is based on if the n-gram is the first or last of a
     # string, and whether it needs to get reverse complimented or not.
     cdef str comparison = ""
+    cdef INT16_t[::1] first_ngram, second_ngram
 
     for i in range(x1_length):
-        cdef INT16_t[::1] first_ngram, second_ngram
         max_length = int_min(n, x1_length - i)
         for j in range(x2_length):
             if x2_length - j < max_length:
@@ -170,7 +170,7 @@ cdef inline FLOAT64_t generic_string_dna_kernel_similarity_with_sigma_c(INT16_t[
                     elif (j + l == x2_length - j and second_ngram < n_pentamers) or (j + l == 0 and second_ngram >= n_pentamers):
                         comparison = "LeftToRight"
                     else:
-                        comparison "LeftToMid"
+                        comparison = "LeftToMid"
                 # First n-gram is the last in the string and reverse strand
                 elif i + l == x1_length - i and first_ngram >= n_pentamers:
                     if (j + l == x2_length - j and second_ngram >= n_pentamers) or (j + l == 0 and second_ngram < n_pentamers):
@@ -221,7 +221,7 @@ cdef inline FLOAT64_t generic_string_dna_kernel_similarity_with_sigma_c(INT16_t[
 @cython.wraparound(False)
 cpdef element_wise_generic_string_dna_kernel_with_sigma_c(INT16_t[:, ::1] X, INT64_t[::1] x_lengths,
                                                           FLOAT64_t[:, ::1] position_matrix,
-                                                          {str: FLOAT64_t[:, ::1]} similarity_matrix_dict, INT64_t n):
+                                                          map[str, FLOAT64_t[:, ::1]] similarity_matrix_dict, INT64_t n):
     cdef int i
     cdef FLOAT64_t[::1] kernel = np.empty(X.shape[0], dtype=np.float64)
     for i in range(X.shape[0]):
