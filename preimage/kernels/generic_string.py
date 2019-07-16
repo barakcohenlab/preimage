@@ -337,7 +337,7 @@ class GenericStringKernel(BaseGenericStringKernel):
                              is_normalized=is_normalized)
             self._properties_file_name = shape_similarity_file_dict
             self.alphabet, self.similarity_tables_dict = load_dna_pentamers_and_shape_similarity(
-                self.properties_file_name)
+    self.properties_file_name, self.sigma_physical)
 
         def __call__(self, X1, X2):
             """Compute the similarity of all the strings of X1 with all the strings of X2.

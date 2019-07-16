@@ -141,13 +141,15 @@ def load_amino_acids_and_descriptors(file_name=AminoAcidFile.blosum62_natural):
     return amino_acids, descriptors
 
 
-def load_dna_pentamers_and_shape_similarity(file_names=DnaShapeFiles.dna_shape_core):
-    """Load DNA pentamers and the 6 DNA shape lookup tables.
+def load_dna_pentamers_and_shape_similarity(file_names=DnaShapeFiles.dna_shape_core, sigma_physical=1.0):
+    """Load DNA pentamers and the 6 DNA shape lookup tables, then normalize and exponentiate the matrix.
 
     Parameters
     ----------
     file_names : dict, {str: str}
         File names for the 6 DNA shape similarity matrices. Keys are types of comparisons, values are the filenames.
+    sigma_physical : float
+        Normalization hyperparameter for physicochemical properties. After loading the distance matrix, normalize
 
     Returns
     -------
@@ -155,8 +157,8 @@ def load_dna_pentamers_and_shape_similarity(file_names=DnaShapeFiles.dna_shape_c
         A list of DNA pentamers (strings). Reverse compliments are excluded, e.g. if AAAAA is present then TTTTT is not.
     similarity_tables: dict, {str: array, shape = (n_pentamers, n_pentamers)}
         DNA shape similarity table of each pentamer with all the other pentamers, where n_pentamers is the number of
-        DNA pentamers. There is one table for each type of comparison (e.g. L-to-L, L-to-M). Keys are the comparison
-        type, values are the similarity tables.
+        DNA pentamers, normalized to the sigma hyperparameter, and then exponentiated. There is one table for each
+        type of comparison (e.g. L-to-L, L-to-M). Keys are the comparison type, values are the similarity tables.
     """
     path_to_files = os.path.join(os.path.dirname(__file__), "dna_shape_matrix")
     similarity_tables = {}
@@ -165,6 +167,9 @@ def load_dna_pentamers_and_shape_similarity(file_names=DnaShapeFiles.dna_shape_c
             lines = data_file.readlines()
         splitted_lines = np.array([line.split() for line in lines])
         pentamers = [str(pentamer) for pentamer in splitted_lines[:, 0]]
-        similarity_tables[comparison] = np.array(splitted_lines[:, 1:], dtype=np.float)
+        similarity = np.array(splitted_lines[:, 1:], dtype=np.float)
+        similarity /= (2.0 * (sigma_physical ** 2))
+        similarity = np.exp(-similarity)
+        similarity_tables[comparison] = similarity
 
     return pentamers, similarity_tables
