@@ -308,128 +308,128 @@ class GenericStringKernel(BaseGenericStringKernel):
         return kernel
 
 
-    class GenericStringDnaKernel(BaseGenericStringKernel):
-        """Generic String Kernel for DNA shape similarity.
+class GenericStringDnaKernel(BaseGenericStringKernel):
+    """Generic String Kernel for DNA shape similarity.
 
-        Computes the similarity between two strings of DNA sequence based on pre-computed similarity tables. Due to
-        edge cases with base step parameters, multiple similarity tables are necessary. These tables are stored as a
-        dictionary with the attribute properties_file_name. Most comparisons use the MidToMid table, but edge cases
-        are necessary when using the left-most and right-most pentamer of a sequence.
+    Computes the similarity between two strings of DNA sequence based on pre-computed similarity tables. Due to
+    edge cases with base step parameters, multiple similarity tables are necessary. These tables are stored as a
+    dictionary with the attribute properties_file_name. Most comparisons use the MidToMid table, but edge cases
+    are necessary when using the left-most and right-most pentamer of a sequence.
 
-        Note that self.n is 1 by default, rather than 5, because this is the size of an n-gram from the PENTAMER
-        alphabet, not an n-gram from the DNA alphabet. Thus an n = 1 really corresponds to a DNA pentamer,
-        n = 2 corresponds to a DNA hexamer, etc.
+    Note that self.n is 1 by default, rather than 5, because this is the size of an n-gram from the PENTAMER
+    alphabet, not an n-gram from the DNA alphabet. Thus an n = 1 really corresponds to a DNA pentamer,
+    n = 2 corresponds to a DNA hexamer, etc.
+    """
+    @property
+    def properties_file_name(self):
+        """Get a dictionary containing the DNA shape similarity tables.
+
+        Returns
+        -------
+        _properties_file_name : dict, {str: str}
+            Keys are the types of DNA shape comparisons, values are the names of the corresponding files.
         """
-        @property
-        def properties_file_name(self):
-            """Get a dictionary containing the DNA shape similarity tables.
+        return self._properties_file_name
 
-            Returns
-            -------
-            _properties_file_name : dict, {str: str}
-                Keys are the types of DNA shape comparisons, values are the names of the corresponding files.
-            """
-            return self._properties_file_name
+    def __init__(self, shape_similarity_file_dict=DnaShapeFiles.dna_shape_core, sigma_position=1.0,
+                 sigma_physical=1.0, n=1, is_normalized=True):
+        super().__init__(sigma_position=sigma_position, sigma_physical=sigma_physical, n=n,
+                         is_normalized=is_normalized)
+        self._properties_file_name = shape_similarity_file_dict
+        self.alphabet, self.similarity_tables_dict = load_dna_pentamers_and_shape_similarity(
+            self.properties_file_name, self.sigma_physical)
 
-        def __init__(self, shape_similarity_file_dict=DnaShapeFiles.dna_shape_core, sigma_position=1.0,
-                     sigma_physical=1.0, n=1, is_normalized=True):
-            super().__init__(sigma_position=sigma_position, sigma_physical=sigma_physical, n=n,
-                             is_normalized=is_normalized)
-            self._properties_file_name = shape_similarity_file_dict
-            self.alphabet, self.similarity_tables_dict = load_dna_pentamers_and_shape_similarity(
-    self.properties_file_name, self.sigma_physical)
+    def __call__(self, X1, X2):
+        """Compute the similarity of all the strings of X1 with all the strings of X2.
 
-        def __call__(self, X1, X2):
-            """Compute the similarity of all the strings of X1 with all the strings of X2.
+        Parameters
+        ----------
+        X1 : array, shape=[n_samples, ]
+            Strings, where n_samples is the number of samples in X1.
+        X2 : array, shape=[n_samples, ]
+            Strings, where n_samples is the number of samples in X2.
 
-            Parameters
-            ----------
-            X1 : array, shape=[n_samples, ]
-                Strings, where n_samples is the number of samples in X1.
-            X2 : array, shape=[n_samples, ]
-                Strings, where n_samples is the number of samples in X2.
+        Returns
+        -------
+        gram_matrix : array, shape = [n_samples_x1, n_samples_x2]
+            Similarity of each string of X1 with each string of X2, n_samples_x1 is the number of samples in X1 and
+            n_samples_x2 is the number of samples in X2.
+        """
+        X1 = np.array(X1)
+        X2 = np.array(X2)
+        is_symmetric = bool(X1.shape == X2.shape and np.all(X1 == X2))
+        max_length, x1_lengths, x2_lengths = self._get_lengths(X1, X2)
+        position_matrix = self.get_position_matrix(max_length)
+        X1_int = transform_dna_to_pentamer_integer_lists(X1, self.alphabet)
+        X2_int = transform_dna_to_pentamer_integer_lists(X2, self.alphabet)
+        gram_matrix = generic_string_dna_kernel_with_sigma_c(X1_int, x1_lengths, X2_int, x2_lengths,
+                                                             position_matrix, self.similarity_tables_dict, self.n,
+                                                             is_symmetric)
+        gram_matrix = self._normalize(gram_matrix, X1_int, x1_lengths, X2_int, x2_lengths, position_matrix,
+                                      self.similarity_tables_dict, is_symmetric)
+        return gram_matrix
 
-            Returns
-            -------
-            gram_matrix : array, shape = [n_samples_x1, n_samples_x2]
-                Similarity of each string of X1 with each string of X2, n_samples_x1 is the number of samples in X1 and
-                n_samples_x2 is the number of samples in X2.
-            """
-            X1 = np.array(X1)
-            X2 = np.array(X2)
-            is_symmetric = bool(X1.shape == X2.shape and np.all(X1 == X2))
-            max_length, x1_lengths, x2_lengths = self._get_lengths(X1, X2)
-            position_matrix = self.get_position_matrix(max_length)
-            X1_int = transform_dna_to_pentamer_integer_lists(X1, self.alphabet)
-            X2_int = transform_dna_to_pentamer_integer_lists(X2, self.alphabet)
-            gram_matrix = generic_string_dna_kernel_with_sigma_c(X1_int, x1_lengths, X2_int, x2_lengths,
-                                                                 position_matrix, self.similarity_tables_dict, self.n,
-                                                                 is_symmetric)
-            gram_matrix = self._normalize(gram_matrix, X1_int, x1_lengths, X2_int, x2_lengths, position_matrix,
-                                          self.similarity_tables_dict, is_symmetric)
-            return gram_matrix
+    def _normalize(self, gram_matrix, X1, x1_lengths, X2, x2_lengths, position_matrix, similarity_tables,
+                   is_symmetric):
+        """Normalize the Gram matrix to the self-similarity of each string if indicated to do so by this kernel's attributes.
 
-        def _normalize(self, gram_matrix, X1, x1_lengths, X2, x2_lengths, position_matrix, similarity_tables,
-                       is_symmetric):
-            """Normalize the Gram matrix to the self-similarity of each string if indicated to do so by this kernel's attributes.
+        Parameters
+        ----------
+        gram_matrix : array, shape = [n_samples_x1, n_samples_x2]
+            Similarity of each string of X1 with each string of X2, n_samples_x1 is the number of samples in X1 and
+            n_samples_x2 is the number of samples in X2.
+        X1 : array, shape=[n_samples, ]
+            Strings, where n_samples is the number of samples in X1.
+        x1_lengths : array, shape=[n_samples, ]
+        ints representing the length of each sample in X1, where n_samples is the number of samples in X1.
+        X2 : array, shape=[n_samples, ]
+            Strings, where n_samples is the number of samples in X2.
+        x2_lengths : array, shape=[n_samples, ]
+        ints representing the length of each sample in X2, where n_samples is the number of samples in X2.
+        position_matrix : array, shape = [max_length, max_length]
+        Similarity of each position with all the other positions.
+        similarity_tables : dict, {str: np.array}
+            Keys are the types of DNA shape comparisons, values are the corresponding similarity tables.
+        is_symmetric : bool
+            Indicates if the Gram matrix is symmetric.
 
-            Parameters
-            ----------
-            gram_matrix : array, shape = [n_samples_x1, n_samples_x2]
-                Similarity of each string of X1 with each string of X2, n_samples_x1 is the number of samples in X1 and
-                n_samples_x2 is the number of samples in X2.
-            X1 : array, shape=[n_samples, ]
-                Strings, where n_samples is the number of samples in X1.
-            x1_lengths : array, shape=[n_samples, ]
-            ints representing the length of each sample in X1, where n_samples is the number of samples in X1.
-            X2 : array, shape=[n_samples, ]
-                Strings, where n_samples is the number of samples in X2.
-            x2_lengths : array, shape=[n_samples, ]
-            ints representing the length of each sample in X2, where n_samples is the number of samples in X2.
-            position_matrix : array, shape = [max_length, max_length]
-            Similarity of each position with all the other positions.
-            similarity_tables : dict, {str: np.array}
-                Keys are the types of DNA shape comparisons, values are the corresponding similarity tables.
-            is_symmetric : bool
-                Indicates if the Gram matrix is symmetric.
+        Returns
+        -------
+        gram_matrix : array, shape = [n_samples_x1, n_samples_x2]
+            Normalized Gram matrix if indicated to do so by the kernel.
+        """
+        if self.is_normalized:
+            if is_symmetric:
+                x1_norm = gram_matrix.diagonal()
+                x2_norm = x1_norm
+            else:
+                x1_norm = element_wise_generic_string_dna_kernel_with_sigma_c(X1, x1_lengths, position_matrix,
+                                                                              similarity_tables, self.n)
+                x2_norm = element_wise_generic_string_dna_kernel_with_sigma_c(X2, x2_lengths, position_matrix,
+                                                                              similarity_tables, self.n)
 
-            Returns
-            -------
-            gram_matrix : array, shape = [n_samples_x1, n_samples_x2]
-                Normalized Gram matrix if indicated to do so by the kernel.
-            """
-            if self.is_normalized:
-                if is_symmetric:
-                    x1_norm = gram_matrix.diagonal()
-                    x2_norm = x1_norm
-                else:
-                    x1_norm = element_wise_generic_string_dna_kernel_with_sigma_c(X1, x1_lengths, position_matrix,
-                                                                                  similarity_tables, self.n)
-                    x2_norm = element_wise_generic_string_dna_kernel_with_sigma_c(X2, x2_lengths, position_matrix,
-                                                                                  similarity_tables, self.n)
+            gram_matrix = ((gram_matrix / np.sqrt(x2_norm)).T / np.sqrt(x1_norm)).T
 
-                gram_matrix = ((gram_matrix / np.sqrt(x2_norm)).T / np.sqrt(x1_norm)).T
+        return gram_matrix
 
-            return gram_matrix
+    def element_wise_kernel(self, X):
+        """Compute the similarity of each string of X with itself in the Generic String kernel.
 
-        def element_wise_kernel(self, X):
-            """Compute the similarity of each string of X with itself in the Generic String kernel.
+        Parameters
+        ----------
+        X : array, shape = [n_samples]
+            Strings, where n_samples is the number of examples in X.
 
-            Parameters
-            ----------
-            X : array, shape = [n_samples]
-                Strings, where n_samples is the number of examples in X.
-
-            Returns
-            -------
-            kernel : array, shape = [n_samples]
-                Similarity of each string with itself in the GS kernel, where n_samples is the number of examples in X.
-            """
-            X = np.array(X)
-            X_int = transform_dna_to_pentamer_integer_lists(X, self.alphabet)
-            x_lengths = np.array([len(x) for x in X], dtype=np.int64)
-            max_length = np.max(x_lengths)
-            position_matrix = self.get_position_matrix(max_length)
-            kernel = element_wise_generic_string_dna_kernel_with_sigma_c(X_int, x_lengths, position_matrix,
-                                                                         self.similarity_tables_dict, self.n)
-            return kernel
+        Returns
+        -------
+        kernel : array, shape = [n_samples]
+            Similarity of each string with itself in the GS kernel, where n_samples is the number of examples in X.
+        """
+        X = np.array(X)
+        X_int = transform_dna_to_pentamer_integer_lists(X, self.alphabet)
+        x_lengths = np.array([len(x) for x in X], dtype=np.int64)
+        max_length = np.max(x_lengths)
+        position_matrix = self.get_position_matrix(max_length)
+        kernel = element_wise_generic_string_dna_kernel_with_sigma_c(X_int, x_lengths, position_matrix,
+                                                                     self.similarity_tables_dict, self.n)
+        return kernel
