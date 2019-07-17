@@ -16,7 +16,7 @@ def generate_all_six_files(mat_type):
 
     """
     prefix = "dnaShapeSimilarity"
-    similarity_keys = ["LeftToLeft", "LefttoMid", "LeftToRight", "MidToMid", "MidToRight", "RightToRight"]
+    similarity_keys = ["LeftToLeft", "LeftToMid", "LeftToRight", "MidToMid", "MidToRight", "RightToRight"]
     similarity_files = {i: f"{prefix}{i}{mat_type}.txt" for i in similarity_keys}
     return similarity_files
 
