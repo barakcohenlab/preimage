@@ -160,6 +160,9 @@ def load_dna_pentamers_and_shape_similarity(file_names=DnaShapeFiles.dna_shape_c
         DNA pentamers, normalized to the sigma hyperparameter, and then exponentiated. There is one table for each
         type of comparison (e.g. L-to-L, L-to-M). Keys are the comparison type, values are the similarity tables.
     """
+    #FIXME need a better implementation of this for when sigma is zero. Perhaps something that will make all of this
+    # easier is if there is only one DNA shape similarty table and in order to deal with edge cases, you simply tack
+    # on an extra 2 bp from the sequence context.
     path_to_files = os.path.join(os.path.dirname(__file__), "dna_shape_matrix")
     similarity_tables = {}
     for comparison, file in file_names.items():
@@ -167,9 +170,14 @@ def load_dna_pentamers_and_shape_similarity(file_names=DnaShapeFiles.dna_shape_c
             lines = data_file.readlines()
         splitted_lines = np.array([line.split() for line in lines])
         pentamers = [str(pentamer) for pentamer in splitted_lines[:, 0]]
-        similarity = np.array(splitted_lines[:, 1:], dtype=np.float)
-        similarity /= (2.0 * (sigma_physical ** 2))
-        similarity = np.exp(-similarity)
+        # If sigma_physical is zero, then the similarity matrix reduces to the identity matrix.
+        if sigma_physical == 0:
+            similarity = np.identity(len(pentamers))
+        else:
+            similarity = np.array(splitted_lines[:, 1:], dtype=np.float)
+            similarity /= (2.0 * (sigma_physical ** 2))
+            similarity = np.exp(-similarity)
+
         similarity_tables[comparison] = similarity
 
     return pentamers, similarity_tables
