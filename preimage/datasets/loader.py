@@ -141,14 +141,14 @@ def load_amino_acids_and_descriptors(file_name=AminoAcidFile.blosum62_natural):
     return amino_acids, descriptors
 
 
-def load_dna_pentamers_and_shape_similarity(file_name=DnaShapeFiles.dna_shape_core, sigma_physical=1.0):
+def load_dna_pentamers_and_shape_similarity(file_name=DnaShapeFiles.dna_shape_core, sigma_properties=1.0):
     """Load DNA pentamers and the DNA shape lookup tables, then normalize and exponentiate the matrix.
 
     Parameters
     ----------
     file_names : str
         File name for the DNA shape similarity matrix.
-    sigma_physical : float
+    sigma_properties : float
         Normalization hyperparameter for physicochemical properties. After loading the distance matrix, normalize
 
     Returns
@@ -164,11 +164,11 @@ def load_dna_pentamers_and_shape_similarity(file_name=DnaShapeFiles.dna_shape_co
         lines = data_file.readlines()
     splitted_lines = np.array([line.split() for line in lines])
     pentamers = [str(pentamer) for pentamer in splitted_lines[:, 0]]
-    # If sigma_physical is zero, then the similarity amtrix reduces to the identity matrix
-    if sigma_physical == 0:
+    # If sigma_properties is zero, then the similarity amtrix reduces to the identity matrix
+    if sigma_properties == 0:
         similarity_table = np.identity(len(pentamers))
     else:
         similarity_table = np.array(splitted_lines[:, 1:], dtype=np.float)
-        similarity_table /= (2.0 * (sigma_physical**2))
+        similarity_table /= (2.0 * (sigma_properties ** 2))
         similarity_table = np.exp(-similarity_table)
     return pentamers, similarity_table
