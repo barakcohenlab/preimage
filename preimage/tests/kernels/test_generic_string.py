@@ -68,7 +68,7 @@ class TestGenericStringKernel(unittest2.TestCase):
         self.position_patch.start().return_value = self.positions_small_sigma
         self.string_to_int_patch.start().return_value = self.aba_int
 
-        similarities = element_wise_kernel(self.aba, self.small_sigma, n=1, alphabet=self.alphabet)
+        similarities = element_wise_kernel(self.aba, self.small_sigma, n_min=1, n_max=1, alphabet=self.alphabet)
 
         numpy.testing.assert_array_equal(similarities, self.aba_small_sigma_similarity)
 
@@ -76,7 +76,7 @@ class TestGenericStringKernel(unittest2.TestCase):
         self.position_patch.start().return_value = self.positions_small_sigma
         self.string_to_int_patch.start().return_value = self.aba_bbbb_int
 
-        similarities = element_wise_kernel(self.aba_bbbb, self.small_sigma, n=1, alphabet=self.alphabet)
+        similarities = element_wise_kernel(self.aba_bbbb, self.small_sigma, n_min=1, n_max=1, alphabet=self.alphabet)
 
         numpy.testing.assert_array_equal(similarities, self.aba_bbbb_small_sigma_similarity)
 
@@ -84,7 +84,7 @@ class TestGenericStringKernel(unittest2.TestCase):
         self.position_patch.start().return_value = self.positions_large_sigma
         self.string_to_int_patch.start().return_value = self.aba_int
 
-        similarities = element_wise_kernel(self.aba, self.large_sigma, n=1, alphabet=self.alphabet)
+        similarities = element_wise_kernel(self.aba, self.large_sigma, n_min=1, n_max=1, alphabet=self.alphabet)
 
         numpy.testing.assert_array_equal(similarities, self.aba_large_sigma_similarity)
 
@@ -92,7 +92,7 @@ class TestGenericStringKernel(unittest2.TestCase):
         self.position_patch.start().return_value = self.positions_medium_sigma
         self.string_to_int_patch.start().return_value = self.bbbb_int
 
-        similarities = element_wise_kernel(self.bbbb, self.medium_sigma, n=1, alphabet=self.alphabet)
+        similarities = element_wise_kernel(self.bbbb, self.medium_sigma, n_min=1, n_max=1, alphabet=self.alphabet)
 
         numpy.testing.assert_array_equal(similarities, self.bbbb_medium_sigma_similarity)
 
@@ -100,7 +100,7 @@ class TestGenericStringKernel(unittest2.TestCase):
         self.position_patch.start().return_value = self.positions_large_sigma
         self.string_to_int_patch.start().return_value = self.bbbb_int
 
-        similarities = element_wise_kernel(self.bbbb, self.large_sigma, n=2, alphabet=self.alphabet)
+        similarities = element_wise_kernel(self.bbbb, self.large_sigma, n_min=1, n_max=2, alphabet=self.alphabet)
 
         numpy.testing.assert_array_equal(similarities, self.bbbb_two_gram_large_sigma_similarity)
 
@@ -116,7 +116,7 @@ class TestGenericStringKernel(unittest2.TestCase):
     def test_same_string_not_normalized_small_sigma_position_gs_kernel_returns_expected_value(self):
         self.position_patch.start().return_value = self.positions_small_sigma
         self.string_to_int_patch.start().side_effect = [self.aba_int, self.aba_int]
-        kernel = GenericStringKernel(is_normalized=False, sigma_position=self.small_sigma, n=1)
+        kernel = GenericStringKernel(is_normalized=False, sigma_position=self.small_sigma, n_max=1)
 
         gram_matrix = kernel(self.aba, self.aba)
 
@@ -126,7 +126,7 @@ class TestGenericStringKernel(unittest2.TestCase):
         self.position_patch.start().return_value = self.positions_large_sigma
         self.string_to_int_patch.start().side_effect = [self.aba_int, self.aba_int]
         kernel = GenericStringKernel(is_normalized=False, sigma_position=self.large_sigma,
-                                     sigma_properties=self.small_sigma, n=1)
+                                     sigma_properties=self.small_sigma, n_max=1)
 
         gram_matrix = kernel(self.aba, self.aba)
 
@@ -136,7 +136,7 @@ class TestGenericStringKernel(unittest2.TestCase):
         self.position_patch.start().return_value = self.positions_large_sigma
         self.string_to_int_patch.start().side_effect = [self.aba_int, self.aba_int]
         kernel = GenericStringKernel(is_normalized=False, sigma_position=self.large_sigma,
-                                     sigma_properties=self.large_sigma, n=1)
+                                     sigma_properties=self.large_sigma, n_max=1)
 
         gram_matrix = kernel(self.aba, self.aba)
 
@@ -146,7 +146,7 @@ class TestGenericStringKernel(unittest2.TestCase):
         self.position_patch.start().return_value = self.positions_large_sigma
         self.string_to_int_patch.start().side_effect = [self.aba_int, self.aba_int]
         kernel = GenericStringKernel(is_normalized=False, sigma_position=self.large_sigma,
-                                     sigma_properties=self.medium_sigma, n=1)
+                                     sigma_properties=self.medium_sigma, n_max=1)
 
         gram_matrix = kernel(self.aba, self.aba)
 
@@ -156,7 +156,7 @@ class TestGenericStringKernel(unittest2.TestCase):
         self.position_patch.start().return_value = self.positions_large_sigma
         self.string_to_int_patch.start().side_effect = [self.aba_int, self.aba_int]
         kernel = GenericStringKernel(is_normalized=False, sigma_position=self.large_sigma,
-                                     sigma_properties=self.medium_sigma, n=2)
+                                     sigma_properties=self.medium_sigma, n_max=2)
 
         gram_matrix = kernel(self.aba, self.aba)
 
@@ -166,7 +166,7 @@ class TestGenericStringKernel(unittest2.TestCase):
         self.position_patch.start().return_value = self.positions_small_sigma
         self.string_to_int_patch.start().side_effect = [self.aba_int, self.bbbb_int]
         kernel = GenericStringKernel(is_normalized=False, sigma_position=self.small_sigma,
-                                     sigma_properties=self.medium_sigma, n=1)
+                                     sigma_properties=self.medium_sigma, n_max=1)
 
         gram_matrix = kernel(self.aba, self.bbbb)
 
@@ -176,7 +176,7 @@ class TestGenericStringKernel(unittest2.TestCase):
         self.position_patch.start().return_value = self.positions_small_sigma
         self.string_to_int_patch.start().side_effect = [self.aba_int, self.bbbb_int]
         kernel = GenericStringKernel(is_normalized=True, sigma_position=self.small_sigma,
-                                     sigma_properties=self.small_sigma, n=1)
+                                     sigma_properties=self.small_sigma, n_max=1)
 
         gram_matrix = kernel(self.aba, self.bbbb)
 
@@ -186,7 +186,7 @@ class TestGenericStringKernel(unittest2.TestCase):
         self.position_patch.start().return_value = self.positions_small_sigma
         self.string_to_int_patch.start().side_effect = [self.aba_bbbb_int, self.aba_bbbb_int]
         kernel = GenericStringKernel(is_normalized=True, sigma_position=self.small_sigma,
-                                     sigma_properties=self.small_sigma, n=1)
+                                     sigma_properties=self.small_sigma, n_max=1)
 
         gram_matrix = kernel(self.aba_bbbb, self.aba_bbbb)
 
@@ -195,7 +195,7 @@ class TestGenericStringKernel(unittest2.TestCase):
     def test_two_gram_same_string_large_sigma_p_medium_sigma_c_gs_element_wise_kernel_returns_expected_value(self):
         self.position_patch.start().return_value = self.positions_large_sigma
         self.string_to_int_patch.start().side_effect = [self.aba_int, self.aba_int]
-        kernel = GenericStringKernel(sigma_position=self.large_sigma, sigma_properties=self.medium_sigma, n=2)
+        kernel = GenericStringKernel(sigma_position=self.large_sigma, sigma_properties=self.medium_sigma, n_max=2)
 
         similarities = kernel.element_wise_kernel(self.aba)
 
@@ -204,7 +204,7 @@ class TestGenericStringKernel(unittest2.TestCase):
     def test_one_gram_two_strings_small_sigmas_gs_kernel_returns_expected_value(self):
         self.position_patch.start().return_value = self.positions_small_sigma
         self.string_to_int_patch.start().return_value = self.aba_bbbb_int
-        kernel = GenericStringKernel(sigma_position=self.small_sigma, sigma_properties=self.small_sigma, n=1)
+        kernel = GenericStringKernel(sigma_position=self.small_sigma, sigma_properties=self.small_sigma, n_max=1)
 
         gram_matrix = kernel.element_wise_kernel(self.aba_bbbb)
 

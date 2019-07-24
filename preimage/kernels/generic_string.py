@@ -4,14 +4,14 @@ import numpy as np
 
 from preimage.datasets.loader import load_amino_acids_and_descriptors, load_dna_pentamers_and_shape_similarity
 from preimage.kernels._generic_string import element_wise_generic_string_kernel, generic_string_kernel_with_sigma_c
-from preimage.kernels._generic_string import element_wise_generic_string_kernel_with_sigma_c, generic_string_dna_kernel_with_sigma_c
+from preimage.kernels._generic_string import element_wise_generic_string_kernel_with_sigma_c
 from preimage.datasets.amino_acid_file import AminoAcidFile
 from preimage.datasets.dna_shape_files import DnaShapeFiles
 from preimage.utils.position import compute_position_weights_matrix
 from preimage.utils.alphabet import transform_strings_to_integer_lists, transform_dna_to_pentamer_integer_lists
 
 
-def element_wise_kernel(X, sigma_position, n, alphabet):
+def element_wise_kernel(X, sigma_position, n_min, n_max, alphabet):
     """Compute the similarity of each string in X with itself in the Generic String kernel.
 
     Takes only in account the position penalties and the n-gram of length n. No n-gram penalties (no sigma_c).
@@ -22,8 +22,10 @@ def element_wise_kernel(X, sigma_position, n, alphabet):
         Strings, where n_samples is the number of examples in X.
     sigma_position : float
         Controls the penalty incurred when two n-grams are not sharing the same position.
-    n : int
-        N-gram length.
+    n_min : int
+        Min n-gram length
+    n_max : int
+        Max n-gram length.
     alphabet : list
         List of letters.
 
@@ -34,33 +36,35 @@ def element_wise_kernel(X, sigma_position, n, alphabet):
         """
     X = np.array(X)
     x_lengths = np.array([len(x) for x in X], dtype=np.int64)
-    max_length = np.max(x_lengths) - n + 1
+    max_length = np.max(x_lengths) - n_max + 1
     position_matrix = compute_position_weights_matrix(max_length, sigma_position)
     X_int = transform_strings_to_integer_lists(X, alphabet)
-    kernel = element_wise_generic_string_kernel(X_int, x_lengths, position_matrix, n)
+    kernel = element_wise_generic_string_kernel(X_int, x_lengths, position_matrix, n_min, n_max)
     return kernel
 
 
 class GenericStringKernel:
     """Generic String Kernel.
 
-    Computes the similarity between two strings by comparing each of their l-gram of length 1 to n. Each l-gram
-    comparison yields a score that depends on the similarity of their respective amino acids (letters) and a shifting
+    Computes the similarity between two strings by comparing each of their l-gram of length n_min to n_max. Each l-gram
+    comparison yields a score that depends on the similarity of their respective substrings and a shifting
     contribution term that decays exponentially rapidly with the distance between the starting positions of the two
-    substrings. The sigma_position parameter controls the shifting contribution term. The sigma_amino_acid parameter
+    substrings. The sigma_position parameter controls the shifting contribution term. The sigma_properties parameter
     controls the amount of penalty incurred when the encoding vectors differ as measured by the squared Euclidean
     distance between these two vectors. The GS kernel outputs the sum of all the l-gram-comparison scores.
 
     Attributes
     ----------
-    amino_acid_file_name : string
+    properties_file_name : string
         Name of the file containing the amino acid substitution matrix.
     sigma_position : float
         Controls the penalty incurred when two n-grams are not sharing the same position.
-    sigma_amino_acid : float
+    sigma_properties : float
         Controls the penalty incurred when the encoding vectors of two amino acids differ.
-    n : int
-        N-gram length.
+    n_min : int
+        Minimum l-gram length.
+    n_max : int
+        Maximum l-gram length.
     is_normalized : bool
         True if the kernel should be normalized, False otherwise.
 
@@ -75,11 +79,12 @@ class GenericStringKernel:
        82.
     """
     def __init__(self, properties_file_name=AminoAcidFile.blosum62_natural, sigma_position=1.0, sigma_properties=1.0,
-                 n=2, is_normalized=True):
-        self.amino_acid_file_name = properties_file_name
+                 n_min=1, n_max=2, is_normalized=True):
+        self.properties_file_name = properties_file_name
         self.sigma_position = sigma_position
-        self.sigma_amino_acid = sigma_properties
-        self.n = n
+        self.sigma_properties = sigma_properties
+        self.n_min = n_min
+        self.n_max = n_max
         self.is_normalized = is_normalized
         self.alphabet, self.descriptors = self._load_amino_acids_and_normalized_descriptors()
 
@@ -108,7 +113,8 @@ class GenericStringKernel:
         X1_int = transform_strings_to_integer_lists(X1, self.alphabet)
         X2_int = transform_strings_to_integer_lists(X2, self.alphabet)
         gram_matrix = generic_string_kernel_with_sigma_c(X1_int, x1_lengths, X2_int, x2_lengths, position_matrix,
-                                                         amino_acid_similarity_matrix, self.n, is_symmetric)
+                                                         amino_acid_similarity_matrix, self.n_min, self.n_max,
+                                                         is_symmetric)
         gram_matrix = self._normalize(gram_matrix, X1_int, x1_lengths, X2_int, x2_lengths, position_matrix,
                                       amino_acid_similarity_matrix, is_symmetric)
         return gram_matrix
@@ -144,11 +150,11 @@ class GenericStringKernel:
                 distance = descriptor_one - descriptor_two
                 squared_distance = np.dot(distance, distance)
                 distance_matrix[index_one, index_two] = squared_distance
-        distance_matrix /= 2. * (self.sigma_amino_acid ** 2)
+        distance_matrix /= 2. * (self.sigma_properties ** 2)
         return np.exp(-distance_matrix)
 
     def _load_amino_acids_and_normalized_descriptors(self):
-        amino_acids, descriptors = load_amino_acids_and_descriptors(self.amino_acid_file_name)
+        amino_acids, descriptors = load_amino_acids_and_descriptors(self.properties_file_name)
         normalization = np.array([np.dot(descriptor, descriptor) for descriptor in descriptors],
                                     dtype=np.float)
         normalization = normalization.reshape(-1, 1)
@@ -168,9 +174,9 @@ class GenericStringKernel:
                 x2_norm = x1_norm
             else:
                 x1_norm = element_wise_generic_string_kernel_with_sigma_c(X1, x1_lengths, position_matrix,
-                                                                          similarity_matrix, self.n)
+                                                                          similarity_matrix, self.n_min, self.n_max)
                 x2_norm = element_wise_generic_string_kernel_with_sigma_c(X2, x2_lengths, position_matrix,
-                                                                          similarity_matrix, self.n)
+                                                                          similarity_matrix, self.n_min, self.n_max)
             gram_matrix = ((gram_matrix / np.sqrt(x2_norm)).T / np.sqrt(x1_norm)).T
         return gram_matrix
 
@@ -194,5 +200,5 @@ class GenericStringKernel:
         similarity_matrix = self.get_alphabet_similarity_matrix()
         position_matrix = self.get_position_matrix(max_length)
         kernel = element_wise_generic_string_kernel_with_sigma_c(X_int, x_lengths, position_matrix, similarity_matrix,
-                                                                 self.n)
+                                                                 self.n_min, self.n_max)
         return kernel
