@@ -86,21 +86,27 @@ class GenericStringKernel:
             "dna_core" is a shortcut for the DNA shape similarity matrix based on the core 4 parameters
             "dna_full" is a shortcut for the DNA shape similarity matrix based on the full set of parameters
         """
-        if properties_file_name == "amino":
+        # Read in the properties file and get the appropriate alphabet
+        if properties_file_name == "amino" or properties_file_name == AminoAcidFile.blosum62_natural:
             self.properties_file_name = AminoAcidFile.blosum62_natural
-        elif properties_file_name == "dna_core":
+            self.alphabet, self.descriptors = self._load_amino_acids_and_normalized_descriptors()
+        elif properties_file_name == "dna_core" or properties_file_name == DnaShapeFiles.dna_shape_core:
             self.properties_file_name = DnaShapeFiles.dna_shape_core
-        elif properties_file_name == "dna_full":
+            # FIXME
+            # self.alphabet, self.descriptors = pass
+        elif properties_file_name == "dna_full" or properties_file_name == DnaShapeFiles.dna_shape_full:
             self.properties_file_name = DnaShapeFiles.dna_shape_full
+            # FIXME
+            # self.alphabet, self.descriptors = pass
         else:
-            self.properties_file_name = properties_file_name
+            # FIXME error type
+            raise ValueError("Did not recognize physical properties file.")
 
         self.sigma_position = sigma_position
         self.sigma_properties = sigma_properties
         self.n_min = n_min
         self.n_max = n_max
         self.is_normalized = is_normalized
-        self.alphabet, self.descriptors = self._load_amino_acids_and_normalized_descriptors()
 
     def __call__(self, X1, X2):
         """Compute the similarity of all the strings of X1 with all the strings of X2 in the Generic String Kernel.
