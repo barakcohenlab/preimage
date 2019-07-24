@@ -56,7 +56,7 @@ class GenericStringKernel:
     Attributes
     ----------
     properties_file_name : string
-        Name of the file containing the amino acid substitution matrix.
+        Name of the file containing the physical properties matrix.
     sigma_position : float
         Controls the penalty incurred when two n-grams are not sharing the same position.
     sigma_properties : float
@@ -78,9 +78,23 @@ class GenericStringKernel:
        peptide-protein binding affinity predictor with kernel ridge regression." BMC bioinformatics 14, no. 1 (2013):
        82.
     """
-    def __init__(self, properties_file_name=AminoAcidFile.blosum62_natural, sigma_position=1.0, sigma_properties=1.0,
-                 n_min=1, n_max=2, is_normalized=True):
-        self.properties_file_name = properties_file_name
+    def __init__(self, properties_file_name, sigma_position=1.0, sigma_properties=1.0, n_min=1, n_max=2,
+                 is_normalized=True):
+        """
+        properties_file_name is a str and can be either the name of a file or one of the following shortcuts:
+            "amino" is a shortcut for the BLOSUM62 matrix
+            "dna_core" is a shortcut for the DNA shape similarity matrix based on the core 4 parameters
+            "dna_full" is a shortcut for the DNA shape similarity matrix based on the full set of parameters
+        """
+        if properties_file_name == "amino":
+            self.properties_file_name = AminoAcidFile.blosum62_natural
+        elif properties_file_name == "dna_core":
+            self.properties_file_name = DnaShapeFiles.dna_shape_core
+        elif properties_file_name == "dna_full":
+            self.properties_file_name = DnaShapeFiles.dna_shape_full
+        else:
+            self.properties_file_name = properties_file_name
+
         self.sigma_position = sigma_position
         self.sigma_properties = sigma_properties
         self.n_min = n_min
