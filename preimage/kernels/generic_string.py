@@ -67,6 +67,10 @@ class GenericStringKernel:
         Maximum l-gram length.
     is_normalized : bool
         True if the kernel should be normalized, False otherwise.
+    alphabet : list-like
+        Unique members of the alphabet, each item is a string.
+    distance_matrix : matrix-like
+        Squared Euclidean distance between the properties of every alphabet member with every other alphabet member.
 
     Notes
     -----
@@ -89,17 +93,17 @@ class GenericStringKernel:
         # Read in the properties file and get the appropriate alphabet
         if properties_file_name == "amino" or properties_file_name == AminoAcidFile.blosum62_natural:
             self.properties_file_name = AminoAcidFile.blosum62_natural
-            self.alphabet, self.descriptors = self._load_amino_acids_and_normalized_descriptors()
+            self.alphabet, self.distance_matrix = self._load_amino_acids_and_normalized_descriptors()
 
         elif properties_file_name == "dna_core" or properties_file_name == DnaShapeFiles.dna_shape_core:
             self.properties_file_name = DnaShapeFiles.dna_shape_core
             # FIXME
-            # self.alphabet, self.descriptors = pass
+            # self.alphabet, self.distance_matrix = pass
 
         elif properties_file_name == "dna_full" or properties_file_name == DnaShapeFiles.dna_shape_full:
             self.properties_file_name = DnaShapeFiles.dna_shape_full
             # FIXME
-            # self.alphabet, self.descriptors = pass
+            # self.alphabet, self.distance_matrix = pass
 
         else:
             raise ValueError("Did not recognize physical properties file.")
@@ -169,25 +173,30 @@ class GenericStringKernel:
         if self.sigma_properties == 0:
             similarity_matrix = np.eye(len(self.alphabet))
         else:
-            distance_matrix = np.zeros((len(self.alphabet), len(self.alphabet)))
-            np.fill_diagonal(distance_matrix, 0)
-            for index_one, descriptor_one in enumerate(self.descriptors):
-                for index_two, descriptor_two in enumerate(self.descriptors):
-                    distance = descriptor_one - descriptor_two
-                    squared_distance = np.dot(distance, distance)
-                    distance_matrix[index_one, index_two] = squared_distance
-            distance_matrix /= 2. * (self.sigma_properties ** 2)
-            similarity_matrix = np.exp(-distance_matrix)
+            similarity_matrix = self.distance_matrix
+            similarity_matrix /= 2. * (self.sigma_properties ** 2)
+            similarity_matrix = np.exp(-similarity_matrix)
 
         return similarity_matrix
 
     def _load_amino_acids_and_normalized_descriptors(self):
+        """Normalize the amino acid descriptors and then compute the squared Euclidean distance between them."""
         amino_acids, descriptors = load_amino_acids_and_descriptors(self.properties_file_name)
         normalization = np.array([np.dot(descriptor, descriptor) for descriptor in descriptors],
                                     dtype=np.float)
         normalization = normalization.reshape(-1, 1)
         descriptors /= np.sqrt(normalization)
-        return amino_acids, descriptors
+
+        # Now that the descriptors are normalized, compute the pairwise squared Euclidean distance between every
+        # amino acid pair.
+        distance_matrix = np.zeros((len(amino_acids), len(amino_acids)))
+        for index_one, descriptor_one in enumerate(descriptors):
+            for index_two, descriptor_two in enumerate(descriptors):
+                distance = descriptor_one - descriptor_two
+                squared_distance = np.dot(distance, distance)
+                distance_matrix[index_one, index_two] = squared_distance
+
+        return amino_acids, distance_matrix
 
     def _get_lengths(self, X1, X2):
         x1_lengths = np.array([len(x) for x in X1], dtype=np.int64)
