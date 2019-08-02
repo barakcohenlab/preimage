@@ -1,4 +1,4 @@
-__author__ = 'amelie'
+__author__ = 'amelie, rfriedman22'
 
 import numpy as np
 
@@ -60,7 +60,7 @@ class GenericStringKernel:
     sigma_position : float
         Controls the penalty incurred when two n-grams are not sharing the same position.
     sigma_properties : float
-        Controls the penalty incurred when the encoding vectors of two amino acids differ.
+        Controls the penalty incurred when the encoding vectors of two alphabet members differ.
     n_min : int
         Minimum l-gram length.
     n_max : int
@@ -90,16 +90,18 @@ class GenericStringKernel:
         if properties_file_name == "amino" or properties_file_name == AminoAcidFile.blosum62_natural:
             self.properties_file_name = AminoAcidFile.blosum62_natural
             self.alphabet, self.descriptors = self._load_amino_acids_and_normalized_descriptors()
+
         elif properties_file_name == "dna_core" or properties_file_name == DnaShapeFiles.dna_shape_core:
             self.properties_file_name = DnaShapeFiles.dna_shape_core
             # FIXME
             # self.alphabet, self.descriptors = pass
+
         elif properties_file_name == "dna_full" or properties_file_name == DnaShapeFiles.dna_shape_full:
             self.properties_file_name = DnaShapeFiles.dna_shape_full
             # FIXME
             # self.alphabet, self.descriptors = pass
+
         else:
-            # FIXME error type
             raise ValueError("Did not recognize physical properties file.")
 
         self.sigma_position = sigma_position
@@ -126,17 +128,17 @@ class GenericStringKernel:
         """
         X1 = np.array(X1)
         X2 = np.array(X2)
-        amino_acid_similarity_matrix = self.get_alphabet_similarity_matrix()
+        alphabet_similarity_matrix = self.get_alphabet_similarity_matrix()
         is_symmetric = bool(X1.shape == X2.shape and np.all(X1 == X2))
         max_length, x1_lengths, x2_lengths = self._get_lengths(X1, X2)
         position_matrix = self.get_position_matrix(max_length)
         X1_int = transform_strings_to_integer_lists(X1, self.alphabet)
         X2_int = transform_strings_to_integer_lists(X2, self.alphabet)
         gram_matrix = generic_string_kernel_with_sigma_c(X1_int, x1_lengths, X2_int, x2_lengths, position_matrix,
-                                                         amino_acid_similarity_matrix, self.n_min, self.n_max,
+                                                         alphabet_similarity_matrix, self.n_min, self.n_max,
                                                          is_symmetric)
         gram_matrix = self._normalize(gram_matrix, X1_int, x1_lengths, X2_int, x2_lengths, position_matrix,
-                                      amino_acid_similarity_matrix, is_symmetric)
+                                      alphabet_similarity_matrix, is_symmetric)
         return gram_matrix
 
     def get_position_matrix(self, max_length):
@@ -161,17 +163,23 @@ class GenericStringKernel:
         Returns
         -------
         similarity_matrix : array, shape = [len(alphabet), len(alphabet)]
-            Similarity of each amino acid (letter) with all the other amino acids.
+            Similarity of each letter with all the other letters.
         """
-        distance_matrix = np.zeros((len(self.alphabet), len(self.alphabet)))
-        np.fill_diagonal(distance_matrix, 0)
-        for index_one, descriptor_one in enumerate(self.descriptors):
-            for index_two, descriptor_two in enumerate(self.descriptors):
-                distance = descriptor_one - descriptor_two
-                squared_distance = np.dot(distance, distance)
-                distance_matrix[index_one, index_two] = squared_distance
-        distance_matrix /= 2. * (self.sigma_properties ** 2)
-        return np.exp(-distance_matrix)
+        # If sigma_properties is 0, matrix reduces to identity matrix
+        if self.sigma_properties == 0:
+            similarity_matrix = np.eye(len(self.alphabet))
+        else:
+            distance_matrix = np.zeros((len(self.alphabet), len(self.alphabet)))
+            np.fill_diagonal(distance_matrix, 0)
+            for index_one, descriptor_one in enumerate(self.descriptors):
+                for index_two, descriptor_two in enumerate(self.descriptors):
+                    distance = descriptor_one - descriptor_two
+                    squared_distance = np.dot(distance, distance)
+                    distance_matrix[index_one, index_two] = squared_distance
+            distance_matrix /= 2. * (self.sigma_properties ** 2)
+            similarity_matrix = np.exp(-distance_matrix)
+
+        return similarity_matrix
 
     def _load_amino_acids_and_normalized_descriptors(self):
         amino_acids, descriptors = load_amino_acids_and_descriptors(self.properties_file_name)
