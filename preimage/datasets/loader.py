@@ -1,6 +1,6 @@
 """Loader for datasets and amino acids"""
 
-__author__ = "amelie"
+__author__ = "amelie, rfriedman22"
 
 import pickle
 import gzip
