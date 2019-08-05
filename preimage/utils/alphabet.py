@@ -70,40 +70,38 @@ def unique_dna_n_gram(n):
     return ngrams
 
 
-def transform_dna_to_pentamer_integer_lists(Y, alphabet):
-    """Convert a DNA sequence into a list of ints, using a sliding window of 5. If a pentamer is not in the alphabet, then its reverse compliment must be in the alphabet.
+def transform_dna_to_ngram_integer_lists(Y, alphabet, n):
+    """Convert a DNA sequence into a list of ints using a sliding window of size n. If an ngram is not in the
+    alphabet, then its reverse compliment must be in the alphabet.
 
     Parameters
     ----------
-    Y : array-like
+    Y : array-list
         The DNA sequences to convert.
-    alphabet : array, shape = [512, ]
-        Corresponding to the 512 DNA pentamers with unique DNA shape properties.
+    alphabet : array, shape = [4^n / 2, ]
+        Corresponds to the unique DNA ngrams in the alphabet. Reverse compliments are excluded.
+    n : int
+        Size of the ngrams.
 
     Returns
     -------
-    Y_int : array, shape = [n_Y, longest_Y - 4]
-        The integer values of pentamers in each sequence. There are 4 fewer columns than the longest sequence because a sliding window is used.
+    Y_int : array, shape = [n_Y, longest_Y - n + 1]
+        The integer values of ngrams in each sequence using a sliding window.
     """
-    window_size = 5
-    pentamer_to_int = get_n_gram_to_index(alphabet, 1)
-    n_pentamers = len(pentamer_to_int.keys())
+    ngram_to_int = get_n_gram_to_index(alphabet, 1)
     n_examples = np.array(Y).shape[0]
-    max_length = np.max([len(y) for y in Y]) - window_size + 1
+    max_length = np.max([len(y) for y in Y]) - n + 1
 
-    # Initialize the array with values of -1, which correspond to no pentamer, i.e. the end of the sequence
-    Y_int = np.full((n_examples, max_length), -1, dtype=np.int16)
+    # Initialize the array with values of -1, which corresponds to no ngram, i.e. the end of the sequence.
+    Y_int = np.full((n_examples, max_length), -1, dtype=np.int64)
     for y_index, y in enumerate(Y):
-        # Indexing for the beginning of each pentamer
-        for letter_index in range(len(y) - window_size + 1):
-            pentamer = y[letter_index:letter_index+window_size]
-            if pentamer in pentamer_to_int.keys():
-                Y_int[y_index, letter_index] = pentamer_to_int[pentamer]
-            # If reverse complimentation is necessary, add the number of pentamers in the alphabet to the int value
-            # of the reverse compliment. This will help with handling edge cases in computing the kernel.
-            else:
-                pentamer = reverse_compliment(pentamer)
-                Y_int[y_index, letter_index] = pentamer_to_int[pentamer] + n_pentamers
+        # Indexing for the beginning of each ngram
+        for letter_index in range(len(y) - n + 1):
+            ngram = y[letter_index:letter_index+n]
+            # Take reverse compliment if needed.
+            if ngram not in ngram_to_int.keys():
+                ngram = reverse_compliment(ngram)
+            Y_int[y_index, letter_index] = ngram_to_int[ngram]
 
     return Y_int
 

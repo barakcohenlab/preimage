@@ -8,7 +8,8 @@ from preimage.kernels._generic_string import element_wise_generic_string_kernel_
 from preimage.datasets.amino_acid_file import AminoAcidFile
 from preimage.datasets.dna_shape_files import DnaShapeFiles
 from preimage.utils.position import compute_position_weights_matrix
-from preimage.utils.alphabet import transform_strings_to_integer_lists, transform_dna_to_pentamer_integer_lists
+from preimage.utils.alphabet import transform_strings_to_integer_lists, transform_dna_to_pentamer_integer_lists, \
+    unique_dna_n_gram
 
 
 def element_wise_kernel(X, sigma_position, n_min, n_max, alphabet):
@@ -56,7 +57,7 @@ class GenericStringKernel:
     Attributes
     ----------
     properties_file_name : string
-        Name of the file containing the physical properties matrix.
+        Name of the file containing the physical properties matrix or identifier of the kernel type (e.g. dna_kmer).
     sigma_position : float
         Controls the penalty incurred when two n-grams are not sharing the same position.
     sigma_properties : float
@@ -87,6 +88,9 @@ class GenericStringKernel:
         """
         properties_file_name is a str and can be either the name of a file or one of the following shortcuts:
             "amino" is a shortcut for the BLOSUM62 matrix
+            "dna_kmer" indicates a k-mer (spectral) kernel for DNA. In this case, n_min must equal n_max,
+            alphabet represents all non-redundant k-mers (reverse compliments are not counted), and distance_matrix
+            is an identity matrix.
             "dna_core" is a shortcut for the DNA shape similarity matrix based on the core 4 parameters
             "dna_full" is a shortcut for the DNA shape similarity matrix based on the full set of parameters
         """
@@ -94,6 +98,21 @@ class GenericStringKernel:
         if properties_file_name == "amino" or properties_file_name == AminoAcidFile.blosum62_natural:
             self.properties_file_name = AminoAcidFile.blosum62_natural
             self.alphabet, self.distance_matrix = self._load_amino_acids_and_normalized_descriptors()
+
+        elif properties_file_name == "dna_kmer":
+            # Make sure n_min == n_max
+            if n_min != n_max:
+                raise ValueError("Specified a DNA k-mer kernel, but n_min does not equal n_max.")
+
+            # Make sure sigma_properties is 0
+            if sigma_properties != 0:
+                raise ValueError(f"DNA k-mer kernel requires sigma_properties = 0, but {sigma_properties} was "
+                                 f"specified.")
+
+            self.properties_file_name = properties_file_name
+            self.alphabet = unique_dna_n_gram(n_min)
+            # Set the distance matrix to the identity matrix
+            self.distance_matrix = np.eye(n_min)
 
         elif properties_file_name == "dna_core" or properties_file_name == DnaShapeFiles.dna_shape_core:
             self.properties_file_name = DnaShapeFiles.dna_shape_core
@@ -106,7 +125,7 @@ class GenericStringKernel:
             # self.alphabet, self.distance_matrix = pass
 
         else:
-            raise ValueError("Did not recognize physical properties file.")
+            raise ValueError("Did not recognize physical properties name.")
 
         self.sigma_position = sigma_position
         self.sigma_properties = sigma_properties
