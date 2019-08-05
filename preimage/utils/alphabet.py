@@ -47,6 +47,29 @@ def transform_strings_to_integer_lists(Y, alphabet):
     return Y_int
 
 
+def unique_dna_n_gram(n):
+    """Generate a unique set of DNA n-grams that exclude reverse compliments.
+
+    Parameters
+    ----------
+    n : int
+        n-gram length
+
+    Returns
+    -------
+    ngrams : list[str]
+        Uniqe set of DNA n-grams
+    """
+    ngrams = set()
+    for gram in get_n_grams(Alphabet.dna, n):
+        # Above function generates all n-grams, check and make sure the reverse compliment is not already in the set
+        if reverse_compliment(gram) not in ngrams:
+            ngrams.add(gram)
+
+    ngrams = list(ngrams)
+    return ngrams
+
+
 def transform_dna_to_pentamer_integer_lists(Y, alphabet):
     """Convert a DNA sequence into a list of ints, using a sliding window of 5. If a pentamer is not in the alphabet, then its reverse compliment must be in the alphabet.
 
