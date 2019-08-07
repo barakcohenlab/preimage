@@ -8,7 +8,7 @@ from preimage.kernels._generic_string import element_wise_generic_string_kernel_
 from preimage.datasets.amino_acid_file import AminoAcidFile
 from preimage.datasets.dna_shape_files import DnaShapeFiles
 from preimage.utils.position import compute_position_weights_matrix
-from preimage.utils.alphabet import transform_strings_to_integer_lists, transform_dna_to_pentamer_integer_lists, \
+from preimage.utils.alphabet import transform_strings_to_integer_lists, transform_dna_to_ngram_integer_lists, \
     unique_dna_n_gram
 
 
@@ -116,11 +116,13 @@ class GenericStringKernel:
 
         elif properties_file_name == "dna_core" or properties_file_name == DnaShapeFiles.dna_shape_core:
             self.properties_file_name = DnaShapeFiles.dna_shape_core
+            raise NotImplementedError("Core DNA shape not implemented yet")
             # FIXME
             # self.alphabet, self.distance_matrix = pass
 
         elif properties_file_name == "dna_full" or properties_file_name == DnaShapeFiles.dna_shape_full:
             self.properties_file_name = DnaShapeFiles.dna_shape_full
+            raise NotImplementedError("Full DNA shape not implemented yet")
             # FIXME
             # self.alphabet, self.distance_matrix = pass
 
@@ -155,13 +157,30 @@ class GenericStringKernel:
         is_symmetric = bool(X1.shape == X2.shape and np.all(X1 == X2))
         max_length, x1_lengths, x2_lengths = self._get_lengths(X1, X2)
         position_matrix = self.get_position_matrix(max_length)
-        X1_int = transform_strings_to_integer_lists(X1, self.alphabet)
-        X2_int = transform_strings_to_integer_lists(X2, self.alphabet)
-        gram_matrix = generic_string_kernel_with_sigma_c(X1_int, x1_lengths, X2_int, x2_lengths, position_matrix,
-                                                         alphabet_similarity_matrix, self.n_min, self.n_max,
-                                                         is_symmetric)
-        gram_matrix = self._normalize(gram_matrix, X1_int, x1_lengths, X2_int, x2_lengths, position_matrix,
-                                      alphabet_similarity_matrix, is_symmetric)
+
+        # Transform sequences to ints and get the appropriate function for computing the kernel depending on what was
+        #  specified
+        if self.properties_file_name == AminoAcidFile.blosum62_natural:
+            transform = lambda x: transform_strings_to_integer_lists(x, self.alphabet)
+            c_fun = lambda x1, x2: generic_string_kernel_with_sigma_c(x1, x1_lengths, x2, x2_lengths,
+                                                                      position_matrix, alphabet_similarity_matrix,
+                                                                      self.n_min, self.n_max, is_symmetric)
+            c_norm_fun = lambda x, x_len: element_wise_generic_string_kernel_with_sigma_c(
+                x, x_len, position_matrix, alphabet_similarity_matrix, self.n_min, self.n_max
+            )
+        elif self.properties_file_name == "dna_kmer":
+            transform = lambda x: transform_dna_to_ngram_integer_lists(x, self.alphabet, self.n_min)
+            raise NotImplementedError("Need to implement DNA k-mer kernel.")
+            # FIXME
+            # c_fun = pass
+            # c_norm_fun = pass
+        else:
+            raise NotImplementedError("String to int transformation not implemented for this kernel!")
+
+        X1_int = transform(X1)
+        X2_int = transform(X2)
+        gram_matrix = c_fun(X1_int, X2_int)
+        gram_matrix = self._normalize(gram_matrix, X1_int, x1_lengths, X2_int, x2_lengths, is_symmetric, c_norm_fun)
         return gram_matrix
 
     def get_position_matrix(self, max_length):
@@ -223,16 +242,14 @@ class GenericStringKernel:
         max_length = max(np.max(x1_lengths), np.max(x2_lengths))
         return max_length, x1_lengths, x2_lengths
 
-    def _normalize(self, gram_matrix, X1, x1_lengths, X2, x2_lengths, position_matrix, similarity_matrix, is_symmetric):
+    def _normalize(self, gram_matrix, X1, x1_lengths, X2, x2_lengths, is_symmetric, c_norm_fun):
         if self.is_normalized:
             if is_symmetric:
                 x1_norm = gram_matrix.diagonal()
                 x2_norm = x1_norm
             else:
-                x1_norm = element_wise_generic_string_kernel_with_sigma_c(X1, x1_lengths, position_matrix,
-                                                                          similarity_matrix, self.n_min, self.n_max)
-                x2_norm = element_wise_generic_string_kernel_with_sigma_c(X2, x2_lengths, position_matrix,
-                                                                          similarity_matrix, self.n_min, self.n_max)
+                x1_norm = c_norm_fun(X1, x1_lengths)
+                x2_norm = c_norm_fun(X2, x2_lengths)
             gram_matrix = ((gram_matrix / np.sqrt(x2_norm)).T / np.sqrt(x1_norm)).T
         return gram_matrix
 
