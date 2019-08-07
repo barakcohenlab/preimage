@@ -3,8 +3,9 @@ __author__ = 'amelie, rfriedman22'
 import numpy as np
 
 from preimage.datasets.loader import load_amino_acids_and_descriptors, load_dna_pentamers_and_shape_similarity
-from preimage.kernels._generic_string import element_wise_generic_string_kernel, generic_string_kernel_with_sigma_c
-from preimage.kernels._generic_string import element_wise_generic_string_kernel_with_sigma_c
+from preimage.kernels._generic_string import element_wise_generic_string_kernel, generic_string_kernel_with_sigma_c, \
+    element_wise_generic_string_kernel_with_sigma_c, generic_string_ngram_kernel_with_sigma_c, \
+    element_wise_generic_string_ngram_kernel_with_sigma_c
 from preimage.datasets.amino_acid_file import AminoAcidFile
 from preimage.datasets.dna_shape_files import DnaShapeFiles
 from preimage.utils.position import compute_position_weights_matrix
@@ -170,10 +171,12 @@ class GenericStringKernel:
             )
         elif self.properties_file_name == "dna_kmer":
             transform = lambda x: transform_dna_to_ngram_integer_lists(x, self.alphabet, self.n_min)
-            raise NotImplementedError("Need to implement DNA k-mer kernel.")
-            # FIXME
-            # c_fun = pass
-            # c_norm_fun = pass
+            c_fun = lambda x1, x2: generic_string_ngram_kernel_with_sigma_c(x1, x1_lengths, x2, x2_lengths,
+                                                                            position_matrix,
+                                                                            alphabet_similarity_matrix, is_symmetric)
+            c_norm_fun = lambda x, x_len: element_wise_generic_string_ngram_kernel_with_sigma_c(
+                x, x_len, position_matrix, alphabet_similarity_matrix
+            )
         else:
             raise NotImplementedError("String to int transformation not implemented for this kernel!")
 
