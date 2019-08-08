@@ -113,7 +113,7 @@ class GenericStringKernel:
             self.properties_file_name = properties_file_name
             self.alphabet = unique_dna_n_gram(n_min)
             # Set the distance matrix to the identity matrix
-            self.distance_matrix = np.eye(n_min)
+            self.distance_matrix = np.eye(len(self.alphabet))
 
         elif properties_file_name == "dna_core" or properties_file_name == DnaShapeFiles.dna_shape_core:
             self.properties_file_name = DnaShapeFiles.dna_shape_core
@@ -182,6 +182,7 @@ class GenericStringKernel:
 
         X1_int = transform(X1)
         X2_int = transform(X2)
+        print(x1_lengths)
         gram_matrix = c_fun(X1_int, X2_int)
         gram_matrix = self._normalize(gram_matrix, X1_int, x1_lengths, X2_int, x2_lengths, is_symmetric, c_norm_fun)
         return gram_matrix
@@ -240,8 +241,8 @@ class GenericStringKernel:
         return amino_acids, distance_matrix
 
     def _get_lengths(self, X1, X2):
-        x1_lengths = np.array([len(x) for x in X1], dtype=np.int64)
-        x2_lengths = np.array([len(x) for x in X2], dtype=np.int64)
+        x1_lengths = np.array([len(x) - self.n_min + 1 for x in X1], dtype=np.int64)
+        x2_lengths = np.array([len(x) - self.n_min + 1 for x in X2], dtype=np.int64)
         max_length = max(np.max(x1_lengths), np.max(x2_lengths))
         return max_length, x1_lengths, x2_lengths
 
