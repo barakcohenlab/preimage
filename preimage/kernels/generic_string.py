@@ -182,7 +182,6 @@ class GenericStringKernel:
 
         X1_int = transform(X1)
         X2_int = transform(X2)
-        print(x1_lengths)
         gram_matrix = c_fun(X1_int, X2_int)
         gram_matrix = self._normalize(gram_matrix, X1_int, x1_lengths, X2_int, x2_lengths, is_symmetric, c_norm_fun)
         return gram_matrix
