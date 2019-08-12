@@ -73,6 +73,8 @@ class GenericStringKernel:
         Unique members of the alphabet, each item is a string.
     distance_matrix : matrix-like
         Squared Euclidean distance between the properties of every alphabet member with every other alphabet member.
+    gram_matrix : matrix-like
+        The result of __call__, corresponding to the Gram matrix of all given data. Initialized as None.
 
     Notes
     -----
@@ -135,6 +137,7 @@ class GenericStringKernel:
         self.n_min = n_min
         self.n_max = n_max
         self.is_normalized = is_normalized
+        self.gram_matrix = None
 
     def __call__(self, X1, X2):
         """Compute the similarity of all the strings of X1 with all the strings of X2 in the Generic String Kernel.
@@ -182,8 +185,10 @@ class GenericStringKernel:
 
         X1_int = transform(X1)
         X2_int = transform(X2)
+        # FIXME figure out a way to parallelize this for speedups
         gram_matrix = c_fun(X1_int, X2_int)
         gram_matrix = self._normalize(gram_matrix, X1_int, x1_lengths, X2_int, x2_lengths, is_symmetric, c_norm_fun)
+        self.gram_matrix = gram_matrix
         return gram_matrix
 
     def get_position_matrix(self, max_length):
@@ -278,3 +283,43 @@ class GenericStringKernel:
         kernel = element_wise_generic_string_kernel_with_sigma_c(X_int, x_lengths, position_matrix, similarity_matrix,
                                                                  self.n_min, self.n_max)
         return kernel
+
+    def set_gram_matrix_from_file(self, filename, delim="\t"):
+        """Read in a precomputed Gram matrix from a file.
+
+        Parameters
+        ----------
+        filename : str
+            Name of the file with the precomputed Gram matrix.
+        delim : str
+            Delimeter in the file.
+
+        Returns
+        -------
+        self
+        """
+        self.gram_matrix = np.genfromtxt(filename, delimiter=delim)
+        return self
+
+    def get_sub_matrix(self, row_idx, col_idx):
+        """Get a sub-Gram matrix. If row_idx is not the same as col_idx, then the rows should represent new data (
+        i.e. test data) while columns represent the original, known training data. Raises an Error if the Gram matrix
+        is not already computed.
+
+        Parameters
+        ----------
+        row_idx : list-like
+            Indices of the rows to extract from the Gram matrix.
+        col_idx : list-like
+            Indices of the columns to extract from the Gram matrix.
+
+        Returns
+        -------
+        sub_mat : 2D ndarray
+            The contents of the sub-Gram matrix
+        """
+        if self.gram_matrix is None:
+            raise AttributeError("Gram matrix has not been computed.")
+        else:
+            sub_mat = self.gram_matrix[np.ix_(row_idx, col_idx)]
+            return sub_mat
