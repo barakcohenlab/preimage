@@ -284,7 +284,31 @@ class GenericStringKernel:
                                                                  self.n_min, self.n_max)
         return kernel
 
-    def set_gram_matrix_from_file(self, filename, delim="\t"):
+    def save_gram_lower_triangle(self, filename, delim="\t"):
+        """Save the lower triangle of the Gram matrix to file. Assumes the matrix is symmetric.
+
+        Parameters
+        ----------
+        filename : str
+            Name of the file to write.
+        delim : str
+            Delimiter in the file
+
+        Returns
+        -------
+        self
+        """
+        if self.gram_matrix.shape[0] != self.gram_matrix.shape[1]:
+            raise ValueError("Gram matrix is not symmetric, cannot take lower triangle.")
+
+        out_str = ""
+        for row in range(self.gram_matrix.shape[0]):
+            out_str += delim.join([f"{i:1.6e}" for i in self.gram_matrix[row, :row + 1]]) + "\n"
+        with open(filename, "w") as fout:
+            fout.write(out_str)
+        return self
+
+    def set_gram_matrix_from_file(self, filename, delim="\t", lower_triangle=True):
         """Read in a precomputed Gram matrix from a file.
 
         Parameters
@@ -292,13 +316,37 @@ class GenericStringKernel:
         filename : str
             Name of the file with the precomputed Gram matrix.
         delim : str
-            Delimeter in the file.
+            Delimiter in the file.
+        lower_triangle : bool
+            If True, the file contains the lower triangle of the Gram matrix. Otherwise, assumes the file is a full
+            matrix.
 
         Returns
         -------
         self
         """
-        self.gram_matrix = np.genfromtxt(filename, delimiter=delim)
+        if lower_triangle:
+            # First get the number of lines
+            n_lines = 0
+            with open(filename) as fin:
+                for line in fin:
+                    n_lines += 1
+
+            # Initialize the Gram matrix as the identity matrix. Since it is symmetric, the diagonal must be ones.
+            gram_matrix = np.eye(n_lines)
+            with open(filename) as fin:
+                for row, line in enumerate(fin):
+                    line = map(float, line.split(delim))
+                    for col, val in enumerate(line):
+                        if row != col:
+                            gram_matrix[row, col] = val
+                            gram_matrix[col, row] = val
+
+            self.gram_matrix = gram_matrix
+
+        else:
+            self.gram_matrix = np.genfromtxt(filename, delimiter=delim)
+
         return self
 
     def get_sub_matrix(self, row_idx, col_idx):
