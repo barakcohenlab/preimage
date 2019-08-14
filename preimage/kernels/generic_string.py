@@ -280,8 +280,15 @@ class GenericStringKernel:
         max_length = np.max(x_lengths)
         similarity_matrix = self.get_alphabet_similarity_matrix()
         position_matrix = self.get_position_matrix(max_length)
-        kernel = element_wise_generic_string_kernel_with_sigma_c(X_int, x_lengths, position_matrix, similarity_matrix,
-                                                                 self.n_min, self.n_max)
+        if self.properties_file_name == AminoAcidFile.blosum62_natural:
+            kernel = element_wise_generic_string_kernel_with_sigma_c(X_int, x_lengths, position_matrix, similarity_matrix,
+                                                                     self.n_min, self.n_max)
+        elif self.properties_file_name == "dna_kmer":
+            kernel = element_wise_generic_string_ngram_kernel_with_sigma_c(X_int, x_lengths, position_matrix,
+                                                                           similarity_matrix)
+        else:
+            raise NotImplementedError("Element-wise kernel not implemented for this kernel!")
+        
         return kernel
 
     def save_gram_lower_triangle(self, filename, delim="\t"):
