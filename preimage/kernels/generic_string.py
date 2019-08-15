@@ -9,8 +9,8 @@ from preimage.kernels._generic_string import element_wise_generic_string_kernel,
 from preimage.datasets.amino_acid_file import AminoAcidFile
 from preimage.datasets.dna_shape_files import DnaShapeFiles
 from preimage.utils.position import compute_position_weights_matrix
-from preimage.utils.alphabet import transform_strings_to_integer_lists, transform_dna_to_ngram_integer_lists, \
-    unique_dna_n_gram
+from preimage.utils.alphabet import get_n_grams, reverse_compliment, transform_strings_to_integer_lists, \
+    transform_dna_to_ngram_integer_lists, unique_dna_n_gram, Alphabet
 
 
 def element_wise_kernel(X, sigma_position, n_min, n_max, alphabet):
@@ -113,9 +113,15 @@ class GenericStringKernel:
                                  f"specified.")
 
             self.properties_file_name = properties_file_name
-            self.alphabet = unique_dna_n_gram(n_min)
-            # Set the distance matrix to the identity matrix
-            self.distance_matrix = np.eye(len(self.alphabet))
+            self.alphabet = get_n_grams(Alphabet.dna, n_min)
+            # Set the distance matrix to the identity matrix, then fill in any off-diagonals for reverse compliments
+            distance_matrix = np.eye(len(self.alphabet))
+            for row, ngram_one in enumerate(self.alphabet):
+                for col, ngram_two in enumerate(self.alphabet):
+                    if row != col and ngram_one == reverse_compliment(ngram_two):
+                        distance_matrix[row, col] = 1
+
+            self.distance_matrix = distance_matrix
 
         elif properties_file_name == "dna_core" or properties_file_name == DnaShapeFiles.dna_shape_core:
             self.properties_file_name = DnaShapeFiles.dna_shape_core
@@ -212,8 +218,11 @@ class GenericStringKernel:
         similarity_matrix : array, shape = [len(alphabet), len(alphabet)]
             Similarity of each letter with all the other letters.
         """
+        # If DNA k-mers, then similarity matrix is just the precomputed distance matrix
+        if self.properties_file_name == "dna_kmer":
+            similarity_matrix = self.distance_matrix
         # If sigma_properties is 0, matrix reduces to identity matrix
-        if self.sigma_properties == 0:
+        elif self.sigma_properties == 0:
             similarity_matrix = np.eye(len(self.alphabet))
         else:
             similarity_matrix = self.distance_matrix
@@ -293,8 +302,8 @@ class GenericStringKernel:
             Similarity of each string with itself in the GS kernel, where n_samples is the number of examples in X.
         """
         X = np.array(X)
-        X_int = transform_strings_to_integer_lists(X, self.alphabet)
-        x_lengths = np.array([len(x) for x in X], dtype=np.int64)
+        X_int = self._transform(X)
+        x_lengths = np.array([len(x) for x in X_int], dtype=np.int64)
         max_length = np.max(x_lengths)
         similarity_matrix = self.get_alphabet_similarity_matrix()
         position_matrix = self.get_position_matrix(max_length)

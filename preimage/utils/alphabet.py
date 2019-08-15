@@ -66,20 +66,19 @@ def unique_dna_n_gram(n):
         if reverse_compliment(gram) not in ngrams:
             ngrams.add(gram)
 
-    ngrams = list(ngrams)
+    ngrams = sorted(list(ngrams))
     return ngrams
 
 
 def transform_dna_to_ngram_integer_lists(Y, alphabet, n):
-    """Convert a DNA sequence into a list of ints using a sliding window of size n. If an ngram is not in the
-    alphabet, then its reverse compliment must be in the alphabet.
+    """Convert a DNA sequence into a list of ints using a sliding window of size n.
 
     Parameters
     ----------
     Y : array-list
         The DNA sequences to convert.
-    alphabet : array, shape = [4^n / 2, ]
-        Corresponds to the unique DNA ngrams in the alphabet. Reverse compliments are excluded.
+    alphabet : array, shape = [4^n, ]
+        Corresponds to the unique DNA ngrams in the alphabet.
     n : int
         Size of the ngrams.
 
@@ -98,7 +97,7 @@ def transform_dna_to_ngram_integer_lists(Y, alphabet, n):
         # Indexing for the beginning of each ngram
         for letter_index in range(len(y) - n + 1):
             ngram = y[letter_index:letter_index+n]
-            # Take reverse compliment if needed.
+            # Take reverse compliment if needed
             if ngram not in ngram_to_int.keys():
                 ngram = reverse_compliment(ngram)
             Y_int[y_index, letter_index] = ngram_to_int[ngram]
