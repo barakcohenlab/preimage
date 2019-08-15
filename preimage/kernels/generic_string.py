@@ -159,13 +159,13 @@ class GenericStringKernel:
         X2 = np.array(X2)
         alphabet_similarity_matrix = self.get_alphabet_similarity_matrix()
         is_symmetric = bool(X1.shape == X2.shape and np.all(X1 == X2))
-        max_length, x1_lengths, x2_lengths = self._get_lengths(X1, X2)
+        X1_int = self._transform(X1)
+        X2_int = self._transform(X2)
+        max_length, x1_lengths, x2_lengths = self._get_lengths(X1_int, X2_int)
         position_matrix = self.get_position_matrix(max_length)
 
-        # Transform sequences to ints and get the appropriate function for computing the kernel depending on what was
-        #  specified
+        # Get the appropriate function for computing the kernel depending on what was specified
         if self.properties_file_name == AminoAcidFile.blosum62_natural:
-            transform = lambda x: transform_strings_to_integer_lists(x, self.alphabet)
             c_fun = lambda x1, x2: generic_string_kernel_with_sigma_c(x1, x1_lengths, x2, x2_lengths,
                                                                       position_matrix, alphabet_similarity_matrix,
                                                                       self.n_min, self.n_max, is_symmetric)
@@ -173,7 +173,6 @@ class GenericStringKernel:
                 x, x_len, position_matrix, alphabet_similarity_matrix, self.n_min, self.n_max
             )
         elif self.properties_file_name == "dna_kmer":
-            transform = lambda x: transform_dna_to_ngram_integer_lists(x, self.alphabet, self.n_min)
             c_fun = lambda x1, x2: generic_string_ngram_kernel_with_sigma_c(x1, x1_lengths, x2, x2_lengths,
                                                                             position_matrix,
                                                                             alphabet_similarity_matrix, is_symmetric)
@@ -181,10 +180,8 @@ class GenericStringKernel:
                 x, x_len, position_matrix, alphabet_similarity_matrix
             )
         else:
-            raise NotImplementedError("String to int transformation not implemented for this kernel!")
+            raise NotImplementedError("Kernel computation not implemented for this version!")
 
-        X1_int = transform(X1)
-        X2_int = transform(X2)
         # FIXME figure out a way to parallelize this for speedups
         gram_matrix = c_fun(X1_int, X2_int)
         gram_matrix = self._normalize(gram_matrix, X1_int, x1_lengths, X2_int, x2_lengths, is_symmetric, c_norm_fun)
@@ -261,6 +258,27 @@ class GenericStringKernel:
             gram_matrix = ((gram_matrix / np.sqrt(x2_norm)).T / np.sqrt(x1_norm)).T
         return gram_matrix
 
+    def _transform(self, x):
+        """Transform strings to int representations.
+
+        Parameters
+        ----------
+        x : list-like
+            Strings of the input sequences.
+
+        Returns
+        -------
+        x_int : 2D ndarray
+            Each input sequence is represented as an ndarray of ints.
+        """
+        if self.properties_file_name == AminoAcidFile.blosum62_natural:
+            x_int = transform_strings_to_integer_lists(x, self.alphabet)
+        elif self.properties_file_name == "dna_kmer":
+            x_int = transform_dna_to_ngram_integer_lists(x, self.alphabet, self.n_min)
+        else:
+            raise NotImplementedError("Transformation not implemented for this kernel.")
+        return x_int
+
     def element_wise_kernel(self, X):
         """Compute the similarity of each string of X with itself in the Generic String kernel.
 
@@ -288,7 +306,7 @@ class GenericStringKernel:
                                                                            similarity_matrix)
         else:
             raise NotImplementedError("Element-wise kernel not implemented for this kernel!")
-        
+
         return kernel
 
     def save_gram_lower_triangle(self, filename, delim="\t"):
