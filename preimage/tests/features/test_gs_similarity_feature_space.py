@@ -42,7 +42,7 @@ class TestGenericStringSimilarityFeatureSpace(unittest2.TestCase):
         self.gs_kernel_mock.element_wise_kernel.return_value = [3, 5]
 
     def test_small_length_small_sigma_p_compute_one_gram_weights_returns_expected_weights(self):
-        feature_space = GenericStringSimilarityFeatureSpace(self.alphabet, n=1, Y=self.abb, is_normalized=False,
+        feature_space = GenericStringSimilarityFeatureSpace(self.alphabet, n_max=1, Y=self.abb, is_normalized=False,
                                                             gs_kernel=self.gs_kernel_mock)
 
         gs_weights = feature_space.compute_weights(y_weights=numpy.array([1.]), y_length=2)
@@ -50,23 +50,23 @@ class TestGenericStringSimilarityFeatureSpace(unittest2.TestCase):
         numpy.testing.assert_array_equal(gs_weights, self.gs_weights_length_two_small_sigma_p_abb)
 
     def test_two_y_small_length_small_sigma_p_compute_one_gram_weights_returns_expected_weights(self):
-        feature_space = GenericStringSimilarityFeatureSpace(self.alphabet, n=1, Y=self.abb_abaaa, is_normalized=False,
-                                                            gs_kernel=self.gs_kernel_mock)
+        feature_space = GenericStringSimilarityFeatureSpace(self.alphabet, n_max=1, Y=self.abb_abaaa,
+                                                            is_normalized=False, gs_kernel=self.gs_kernel_mock)
 
         gs_weights = feature_space.compute_weights(y_weights=numpy.array([1., 0.5]), y_length=2)
 
         numpy.testing.assert_array_equal(gs_weights, self.gs_weights_length_two_small_sigma_p_abb_abaaa)
 
     def test_two_y_normalized_small_sigma_p_compute_one_gram_weights_returns_expected_weights(self):
-        feature_space = GenericStringSimilarityFeatureSpace(self.alphabet, n=1, Y=self.abb_abaaa, is_normalized=True,
-                                                            gs_kernel=self.gs_kernel_mock)
+        feature_space = GenericStringSimilarityFeatureSpace(self.alphabet, n_max=1, Y=self.abb_abaaa,
+                                                            is_normalized=True, gs_kernel=self.gs_kernel_mock)
 
         gs_weights = feature_space.compute_weights(y_weights=numpy.array([1., 0.5]), y_length=2)
 
         numpy.testing.assert_array_equal(gs_weights, self.gs_weights_normalized_abb_abaaa)
 
     def test_small_length_small_sigma_p_half_weight_compute_one_gram_weights_returns_expected_weights(self):
-        feature_space = GenericStringSimilarityFeatureSpace(self.alphabet, n=1, Y=self.abb, is_normalized=False,
+        feature_space = GenericStringSimilarityFeatureSpace(self.alphabet, n_max=1, Y=self.abb, is_normalized=False,
                                                             gs_kernel=self.gs_kernel_mock)
 
         gs_weights = feature_space.compute_weights(y_weights=numpy.array([0.5]), y_length=2)
@@ -74,7 +74,7 @@ class TestGenericStringSimilarityFeatureSpace(unittest2.TestCase):
         numpy.testing.assert_array_equal(gs_weights, 0.5 * self.gs_weights_length_two_small_sigma_p_abb)
 
     def test_large_length_small_sigma_p_compute_one_gram_weights_returns_expected_weights(self):
-        feature_space = GenericStringSimilarityFeatureSpace(self.alphabet, n=1, Y=self.abb, is_normalized=False,
+        feature_space = GenericStringSimilarityFeatureSpace(self.alphabet, n_max=1, Y=self.abb, is_normalized=False,
                                                             gs_kernel=self.gs_kernel_mock)
 
         gs_weights = feature_space.compute_weights(y_weights=numpy.array([1.]), y_length=4)
@@ -83,7 +83,7 @@ class TestGenericStringSimilarityFeatureSpace(unittest2.TestCase):
 
     def test_large_length_large_sigma_p_compute_one_gram_weights_returns_n_gram_weights(self):
         self.gs_kernel_mock.get_position_matrix.return_value = self.positions_large_sigma
-        feature_space = GenericStringSimilarityFeatureSpace(self.alphabet, n=1, Y=self.abb, is_normalized=False,
+        feature_space = GenericStringSimilarityFeatureSpace(self.alphabet, n_max=1, Y=self.abb, is_normalized=False,
                                                             gs_kernel=self.gs_kernel_mock)
 
         gs_weights = feature_space.compute_weights(y_weights=numpy.array([1.]), y_length=2)
@@ -91,7 +91,7 @@ class TestGenericStringSimilarityFeatureSpace(unittest2.TestCase):
         numpy.testing.assert_array_equal(gs_weights, self.gs_weights_length_two_large_sigma_p_abb)
 
     def test_small_sigma_p_compute_two_gram_weights_returns_expected_weights(self):
-        feature_space = GenericStringSimilarityFeatureSpace(self.alphabet, n=2, Y=self.abb, is_normalized=False,
+        feature_space = GenericStringSimilarityFeatureSpace(self.alphabet, n_max=2, Y=self.abb, is_normalized=False,
                                                             gs_kernel=self.gs_kernel_mock)
 
         gs_weights = feature_space.compute_weights(y_weights=numpy.array([1.]), y_length=2)
@@ -99,7 +99,7 @@ class TestGenericStringSimilarityFeatureSpace(unittest2.TestCase):
         numpy.testing.assert_array_equal(gs_weights, self.gs_weights_two_gram_length_two_small_sigma_p_abb)
 
     def test_length_three_small_sigma_p_compute_two_gram_weights_returns_expected_weights(self):
-        feature_space = GenericStringSimilarityFeatureSpace(self.alphabet, n=2, Y=self.abb, is_normalized=False,
+        feature_space = GenericStringSimilarityFeatureSpace(self.alphabet, n_max=2, Y=self.abb, is_normalized=False,
                                                             gs_kernel=self.gs_kernel_mock)
 
         gs_weights = feature_space.compute_weights(y_weights=numpy.array([1.]), y_length=3)
