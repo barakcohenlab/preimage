@@ -1,8 +1,8 @@
-__author__ = 'amelie'
+__author__ = 'amelie, rfriedman22'
 
 import numpy as np
 from preimage.features.gs_similarity_weights import compute_gs_similarity_weights
-from preimage.utils.alphabet import transform_strings_to_integer_lists, get_n_grams
+from preimage.utils.alphabet import get_n_grams
 
 
 # Shouldn't label this as "feature-space" since we don't use a sparse matrix representation here.
@@ -14,8 +14,10 @@ class GenericStringSimilarityFeatureSpace:
 
     Attributes
     ----------
-    n : int
+    n_max : int
         N-gram length.
+    n_min : int
+        Minimum sub n-gram length.
     is_normalized : bool
         True if the feature space should be normalized, False otherwise.
     max_train_length : int
@@ -24,14 +26,17 @@ class GenericStringSimilarityFeatureSpace:
         Generic string kernel.
     """
 
-    def __init__(self, alphabet, n, Y, is_normalized, gs_kernel):
-        self.n = int(n)
+    def __init__(self, alphabet, n_max, Y, is_normalized, gs_kernel, n_min=1):
+        self.n_min = int(n_min)
+        self.n_max = int(n_max)
         self.is_normalized = is_normalized
-        self._y_lengths = np.array([len(y) for y in Y])
-        self.max_train_length = np.max(self._y_lengths)
         self.gs_kernel = gs_kernel
-        self._Y_int = transform_strings_to_integer_lists(Y, alphabet)
-        self._n_grams_int = transform_strings_to_integer_lists(get_n_grams(alphabet, n), alphabet)
+        # Use the kernel to transform input sequences, because the transformation depends on the original property
+        # similarity matrix.
+        self._Y_int = self.gs_kernel.transform(Y)
+        self._y_lengths = np.array([len(y) - self.n_min + 1 for y in Y])
+        self.max_train_length = np.max(self._y_lengths)
+        self._n_grams_int = self.gs_kernel.transform(get_n_grams(alphabet, self.n_max))
         self._n_gram_similarity_matrix = gs_kernel.get_alphabet_similarity_matrix()
         if is_normalized:
             self._normalization = np.sqrt(gs_kernel.element_wise_kernel(Y))
@@ -52,11 +57,13 @@ class GenericStringSimilarityFeatureSpace:
             Weight of each n-gram at each position, where y_n_gram_count is the number of n-gram in y_length.
         """
         normalized_weights = np.copy(y_weights)
+        y_length = y_length - self.n_max + 1
         max_length = max(y_length, self.max_train_length)
         if self.is_normalized:
             normalized_weights *= 1. / self._normalization
-        n_partitions = y_length - self.n + 1
+        n_partitions = y_length
         position_matrix = self.gs_kernel.get_position_matrix(max_length)
         gs_weights = compute_gs_similarity_weights(n_partitions, self._n_grams_int, self._Y_int, normalized_weights,
-                                                   self._y_lengths, position_matrix, self._n_gram_similarity_matrix)
+                                                   self._y_lengths, position_matrix, self._n_gram_similarity_matrix,
+                                                   self.n_min)
         return np.array(gs_weights)

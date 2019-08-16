@@ -3,6 +3,7 @@ __author__ = 'amelie'
 from math import sqrt
 
 import unittest2
+import numpy as np
 import numpy.testing
 from mock import Mock
 
@@ -32,11 +33,22 @@ class TestGenericStringSimilarityFeatureSpace(unittest2.TestCase):
         self.gs_weights_two_gram_length_two_small_sigma_p_abb = numpy.array([[2., 3, 1.25, 2]])
         self.gs_weights_two_gram_length_three_small_sigma_p_abb = numpy.array([[1.5, 2, 0.75, 1], [1.25, 2, 2, 3]])
 
+    def _transform(self, Y):
+        letter_to_int = {'a': 0, 'b': 1}
+        n_examples = np.array(Y).shape[0]
+        max_length = np.max([len(y) for y in Y])
+        Y_int = np.zeros((n_examples, max_length), dtype=np.int8) - 1
+        for y_index, y in enumerate(Y):
+            for letter_index, letter in enumerate(y):
+                Y_int[y_index, letter_index] = letter_to_int[letter]
+        return Y_int
+
     def setup_gs_kernel_mock(self):
         self.positions_small_sigma = numpy.eye(5, dtype=numpy.float64)
         self.positions_large_sigma = numpy.ones((5, 5), dtype=numpy.float64)
         self.similarity_matrix = numpy.array([[1, 0.5], [0.5, 1]])
         self.gs_kernel_mock = Mock()
+        self.gs_kernel_mock.transform = self._transform
         self.gs_kernel_mock.get_position_matrix.return_value = self.positions_small_sigma
         self.gs_kernel_mock.get_alphabet_similarity_matrix.return_value = self.similarity_matrix
         self.gs_kernel_mock.element_wise_kernel.return_value = [3, 5]

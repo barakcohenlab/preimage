@@ -178,7 +178,7 @@ class GenericStringKernel:
             c_norm_fun = lambda x, x_len: element_wise_generic_string_kernel_with_sigma_c(
                 x, x_len, position_matrix, alphabet_similarity_matrix, self.n_min, self.n_max
             )
-        elif self.properties_file_name == "dna_kmer":
+        elif self.is_dna_kmer():
             c_fun = lambda x1, x2: generic_string_ngram_kernel_with_sigma_c(x1, x1_lengths, x2, x2_lengths,
                                                                             position_matrix,
                                                                             alphabet_similarity_matrix, is_symmetric)
@@ -219,7 +219,7 @@ class GenericStringKernel:
             Similarity of each letter with all the other letters.
         """
         # If DNA k-mers, then similarity matrix is just the precomputed distance matrix
-        if self.properties_file_name == "dna_kmer":
+        if self.is_dna_kmer():
             similarity_matrix = self.distance_matrix
         # If sigma_properties is 0, matrix reduces to identity matrix
         elif self.sigma_properties == 0:
@@ -282,7 +282,7 @@ class GenericStringKernel:
         """
         if self.properties_file_name == AminoAcidFile.blosum62_natural:
             x_int = transform_strings_to_integer_lists(x, self.alphabet)
-        elif self.properties_file_name == "dna_kmer":
+        elif self.is_dna_kmer():
             x_int = transform_dna_to_ngram_integer_lists(x, self.alphabet, self.n_max)
         else:
             raise NotImplementedError("Transformation not implemented for this kernel.")
@@ -310,7 +310,7 @@ class GenericStringKernel:
         if self.properties_file_name == AminoAcidFile.blosum62_natural:
             kernel = element_wise_generic_string_kernel_with_sigma_c(X_int, x_lengths, position_matrix, similarity_matrix,
                                                                      self.n_min, self.n_max)
-        elif self.properties_file_name == "dna_kmer":
+        elif self.is_dna_kmer():
             kernel = element_wise_generic_string_ngram_kernel_with_sigma_c(X_int, x_lengths, position_matrix,
                                                                            similarity_matrix)
         else:
@@ -404,4 +404,7 @@ class GenericStringKernel:
             raise AttributeError("Gram matrix has not been computed.")
         else:
             sub_mat = self.gram_matrix[np.ix_(row_idx, col_idx)]
-            return sub_mat
+        return sub_mat
+
+    def is_dna_kmer(self):
+        return self.properties_file_name == "dna_kmer"
