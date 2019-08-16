@@ -113,7 +113,7 @@ class GenericStringKernel:
                                  f"specified.")
 
             self.properties_file_name = properties_file_name
-            self.alphabet = get_n_grams(Alphabet.dna, n_min)
+            self.alphabet = get_n_grams(Alphabet.dna, n_max)
             # Set the distance matrix to the identity matrix, then fill in any off-diagonals for reverse compliments
             distance_matrix = np.eye(len(self.alphabet))
             for row, ngram_one in enumerate(self.alphabet):
@@ -165,9 +165,9 @@ class GenericStringKernel:
         X2 = np.array(X2)
         alphabet_similarity_matrix = self.get_alphabet_similarity_matrix()
         is_symmetric = bool(X1.shape == X2.shape and np.all(X1 == X2))
-        X1_int = self._transform(X1)
-        X2_int = self._transform(X2)
-        max_length, x1_lengths, x2_lengths = self._get_lengths(X1_int, X2_int)
+        X1_int = self.transform(X1)
+        X2_int = self.transform(X2)
+        max_length, x1_lengths, x2_lengths = self._get_lengths(X1, X2)
         position_matrix = self.get_position_matrix(max_length)
 
         # Get the appropriate function for computing the kernel depending on what was specified
@@ -267,7 +267,7 @@ class GenericStringKernel:
             gram_matrix = ((gram_matrix / np.sqrt(x2_norm)).T / np.sqrt(x1_norm)).T
         return gram_matrix
 
-    def _transform(self, x):
+    def transform(self, x):
         """Transform strings to int representations.
 
         Parameters
@@ -283,7 +283,7 @@ class GenericStringKernel:
         if self.properties_file_name == AminoAcidFile.blosum62_natural:
             x_int = transform_strings_to_integer_lists(x, self.alphabet)
         elif self.properties_file_name == "dna_kmer":
-            x_int = transform_dna_to_ngram_integer_lists(x, self.alphabet, self.n_min)
+            x_int = transform_dna_to_ngram_integer_lists(x, self.alphabet, self.n_max)
         else:
             raise NotImplementedError("Transformation not implemented for this kernel.")
         return x_int
@@ -302,8 +302,8 @@ class GenericStringKernel:
             Similarity of each string with itself in the GS kernel, where n_samples is the number of examples in X.
         """
         X = np.array(X)
-        X_int = self._transform(X)
-        x_lengths = np.array([len(x) for x in X_int], dtype=np.int64)
+        X_int = self.transform(X)
+        x_lengths = np.array([len(x) for x in X], dtype=np.int64)
         max_length = np.max(x_lengths)
         similarity_matrix = self.get_alphabet_similarity_matrix()
         position_matrix = self.get_position_matrix(max_length)

@@ -14,7 +14,7 @@ class TestStringMaximizationModel(unittest2.TestCase):
         self.setup_graph_builder()
         self.setup_branch_and_bound()
         self.alphabet = ['a', 'b', 'c']
-        self.model_with_length = StringMaximizationModel(self.alphabet, n=1, gs_kernel=Mock(), max_time=30)
+        self.model_with_length = StringMaximizationModel(self.alphabet, n_max=1, gs_kernel=Mock(), max_time=30)
         self.y_weights = numpy.array([1, 0.5])
         self.Y_train = ['aa', 'bab']
 

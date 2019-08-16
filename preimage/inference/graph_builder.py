@@ -22,6 +22,9 @@ class GraphBuilder:
         N-gram length.
     """
     def __init__(self, alphabet, n):
+        if any([len(i) > 1 for i in alphabet]):
+            raise AttributeError("Alphabet contains strings that are more than one letter.")
+
         self.alphabet = alphabet
         self.n = int(n)
         self._n_gram_count = len(self.alphabet) ** self.n
