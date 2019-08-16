@@ -72,3 +72,36 @@ cdef FLOAT64_t compute_last_n_gram_weight(int partition_index, INT8_t[::1] n_gra
         n_gram_weight += compute_n_gram_weight(i + partition_index, n_gram[i:], Y, y_weights, y_lengths,
                                                position_matrix, similarity_matrix, n_min)
     return n_gram_weight
+
+
+@cython.wraparound(False)
+cpdef FLOAT64_t[:,::1] compute_ngram_gs_similarity_weights(int n_partitions, INT64_t[:,::1] n_grams, INT64_t[:,::1] Y,
+                                                           FLOAT64_t[::1] y_weights, INT64_t[::1] y_lengths,
+                                                           FLOAT64_t[:,::1] position_matrix,
+                                                           FLOAT64_t[:,::1] similarity_matrix):
+    """Implementation of DAG edge weights when n_min == n_max and strings are pre-computed to n-grams."""
+    cdef int partition_index, n_gram_index, y_index, i
+    cdef INT64_t y_length
+    cdef INT64_t[::1] n_gram
+    cdef FLOAT64_t kernel, n_gram_weight
+    cdef FLOAT64_t[:, ::1] gs_weights = np.empty((n_partitions, n_grams.shape[0]))
+
+    for partition_index in range(n_partitions):
+        for n_gram_index, n_gram in enumerate(n_grams):
+            if partition_index < n_partitions - 1:
+                n_gram_weight = 0.0
+                for y_index, y in enumerate(Y):
+                    kernel = 0.0
+                    y_length = y_lengths[y_index]
+                    for i in range(y_length):
+                        # Compare each n-gram of y with this n-gram, and weight it by the positional similarity
+                        kernel += position_matrix[partition_index, i] * similarity_matrix[n_gram_index, y[i]]
+                    # Multiply the total similarity to y by the model weight of y, and add that to the n-gram weight
+                    n_gram_weight += y_weights[y_index] * kernel
+                # The edge weight is now the similarity of this n-gram to all strings in Y, weighted by the model weights of Y
+                gs_weights[partition_index, n_gram_index] = n_gram_weight
+            else:
+                # Since n_min == n_max, there is no additional contribution from the final edge.
+                gs_weights[partition_index, n_gram_index] = 0.0
+
+    return gs_weights

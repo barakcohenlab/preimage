@@ -1,7 +1,7 @@
 __author__ = 'amelie, rfriedman22'
 
 import numpy as np
-from preimage.features.gs_similarity_weights import compute_gs_similarity_weights
+from preimage.features.gs_similarity_weights import compute_gs_similarity_weights, compute_ngram_gs_similarity_weights
 from preimage.utils.alphabet import get_n_grams
 
 
@@ -63,7 +63,17 @@ class GenericStringSimilarityFeatureSpace:
             normalized_weights *= 1. / self._normalization
         n_partitions = y_length
         position_matrix = self.gs_kernel.get_position_matrix(max_length)
-        gs_weights = compute_gs_similarity_weights(n_partitions, self._n_grams_int, self._Y_int, normalized_weights,
-                                                   self._y_lengths, position_matrix, self._n_gram_similarity_matrix,
-                                                   self.n_min)
+        # Determining which C function to call depends on the dtype of _n_grams_int, which is determined by which
+        # type of GS kernel is used.
+        if self.gs_kernel.is_amino_acid():
+            gs_weights = compute_gs_similarity_weights(n_partitions, self._n_grams_int, self._Y_int, normalized_weights,
+                                                       self._y_lengths, position_matrix, self._n_gram_similarity_matrix,
+                                                       self.n_min)
+        elif self.gs_kernel.is_dna_kmer():
+            gs_weights = compute_ngram_gs_similarity_weights(n_partitions, self._n_grams_int, self._Y_int,
+                                                             normalized_weights, self._y_lengths, position_matrix,
+                                                             self._n_gram_similarity_matrix)
+        else:
+            raise NotImplementedError("GS similarity weights not implemented for this kernel.")
+
         return np.array(gs_weights)

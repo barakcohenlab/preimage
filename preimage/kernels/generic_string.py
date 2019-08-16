@@ -171,7 +171,7 @@ class GenericStringKernel:
         position_matrix = self.get_position_matrix(max_length)
 
         # Get the appropriate function for computing the kernel depending on what was specified
-        if self.properties_file_name == AminoAcidFile.blosum62_natural:
+        if self.is_amino_acid():
             c_fun = lambda x1, x2: generic_string_kernel_with_sigma_c(x1, x1_lengths, x2, x2_lengths,
                                                                       position_matrix, alphabet_similarity_matrix,
                                                                       self.n_min, self.n_max, is_symmetric)
@@ -280,7 +280,7 @@ class GenericStringKernel:
         x_int : 2D ndarray
             Each input sequence is represented as an ndarray of ints.
         """
-        if self.properties_file_name == AminoAcidFile.blosum62_natural:
+        if self.is_amino_acid():
             x_int = transform_strings_to_integer_lists(x, self.alphabet)
         elif self.is_dna_kmer():
             x_int = transform_dna_to_ngram_integer_lists(x, self.alphabet, self.n_max)
@@ -303,11 +303,11 @@ class GenericStringKernel:
         """
         X = np.array(X)
         X_int = self.transform(X)
-        x_lengths = np.array([len(x) for x in X], dtype=np.int64)
+        x_lengths = np.array([len(x) - self.n_min + 1 for x in X], dtype=np.int64)
         max_length = np.max(x_lengths)
         similarity_matrix = self.get_alphabet_similarity_matrix()
         position_matrix = self.get_position_matrix(max_length)
-        if self.properties_file_name == AminoAcidFile.blosum62_natural:
+        if self.is_amino_acid():
             kernel = element_wise_generic_string_kernel_with_sigma_c(X_int, x_lengths, position_matrix, similarity_matrix,
                                                                      self.n_min, self.n_max)
         elif self.is_dna_kmer():
@@ -408,3 +408,6 @@ class GenericStringKernel:
 
     def is_dna_kmer(self):
         return self.properties_file_name == "dna_kmer"
+
+    def is_amino_acid(self):
+        return self.properties_file_name == AminoAcidFile.blosum62_natural
