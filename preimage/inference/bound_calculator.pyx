@@ -30,17 +30,17 @@ cdef class BoundCalculator:
 
 
 cdef class MaxBoundCalculator(BoundCalculator):
-    def __init__(self, n, graph, graph_weights, n_gram_to_index):
-        self.n = n
+    def __init__(self, n_max, graph, graph_weights, n_gram_to_index):
+        self.n_max = n_max
         self.graph = graph
         self.graph_weights = graph_weights
         self.n_gram_to_index = n_gram_to_index
 
     cdef Bound compute_bound(self, str  y, FLOAT64_t parent_real_value, int final_length):
-        cdef int max_partition_index = final_length - self.n
-        cdef int partition_index = max_partition_index - (len(y) - self.n)
+        cdef int max_partition_index = final_length - self.n_max
+        cdef int partition_index = max_partition_index - (len(y) - self.n_max)
         cdef int graph_weight_partition_index = min(self.graph_weights.shape[0]-1, partition_index)
-        cdef int n_gram_index = self.n_gram_to_index[y[0:self.n]]
+        cdef int n_gram_index = self.n_gram_to_index[y[0:self.n_max]]
         cdef Bound max_bound
         max_bound.real_value = self.graph_weights[graph_weight_partition_index, n_gram_index] + parent_real_value
         max_bound.bound_value = self.graph[partition_index, n_gram_index] + parent_real_value
@@ -48,12 +48,12 @@ cdef class MaxBoundCalculator(BoundCalculator):
 
     cdef FLOAT64_t[::1] get_start_node_real_values(self, int final_length):
         cdef int max_partition_index, graph_weight_partition_index
-        max_partition_index = final_length - self.n
+        max_partition_index = final_length - self.n_max
         graph_weight_partition_index = min(self.graph_weights.shape[0] - 1, max_partition_index)
         return self.graph_weights[graph_weight_partition_index]
 
     cdef FLOAT64_t[::1] get_start_node_bounds(self, int final_length):
-        return self.graph[final_length - self.n]
+        return self.graph[final_length - self.n_max]
 
 
 cdef class OCRMinBoundCalculator(BoundCalculator):
@@ -88,8 +88,9 @@ cdef class OCRMinBoundCalculator(BoundCalculator):
 
 
 cdef class PeptideMinBoundCalculator(BoundCalculator):
-    def __init__(self, n, alphabet_length, n_grams, letter_to_index, final_length, gs_kernel):
-        self.n = n
+    def __init__(self, n_max, alphabet_length, n_grams, letter_to_index, final_length, gs_kernel, n_min=1):
+        self.n_max = n_max
+        self.n_min = n_min
         self.alphabet_length = alphabet_length
         self.letter_to_index = letter_to_index
         self.similarity_matrix = gs_kernel.get_alphabet_similarity_matrix()
@@ -108,10 +109,10 @@ cdef class PeptideMinBoundCalculator(BoundCalculator):
             for j in range(length):
                 for k in range(j + 1, length):
                     current_similarity = 1.
-                    for l in range(self.n):
+                    for l in range(self.n_min - 1, self.n_max):
                         current_similarity *= min_similarity
                         length_bound += self.position_matrix[j, k] * current_similarity
-            y_y_bounds[length] =  self.n * length + 2 * length_bound
+            y_y_bounds[length] =  self.n_max * length + 2 * length_bound
         return y_y_bounds
 
     cdef FLOAT64_t[::1] precompute_start_node_bounds(self, int final_length, list n_grams):
@@ -119,7 +120,7 @@ cdef class PeptideMinBoundCalculator(BoundCalculator):
         cdef FLOAT64_t y_y_prime_bound
         cdef str n_gram
         cdef int i
-        cdef int n_gram_start_index = final_length - self.n
+        cdef int n_gram_start_index = final_length - self.n_max
         for i, n_gram in enumerate(n_grams):
             y_y_prime_bound = self.compute_y_y_prime_bound(n_gram, n_gram_start_index)
             bounds[i] = self.start_node_real_values[i] + self.y_y_bounds[n_gram_start_index] + 2 * y_y_prime_bound
@@ -127,8 +128,8 @@ cdef class PeptideMinBoundCalculator(BoundCalculator):
 
     cdef Bound compute_bound(self, str y, FLOAT64_t parent_real_value, int final_length):
         cdef FLOAT64_t gs_similarity = parent_real_value + self.gs_similarity_new_n_gram(y)
-        cdef FLOAT64_t y_y_similarity = self.y_y_bounds[final_length - len(y)]
-        cdef FLOAT64_t y_y_prime_similarity = self.compute_y_y_prime_bound(y, final_length - len(y))
+        cdef FLOAT64_t y_y_similarity = self.y_y_bounds[final_length - len(y) - self.n_min + 1]
+        cdef FLOAT64_t y_y_prime_similarity = self.compute_y_y_prime_bound(y, final_length - len(y) - self.n_min + 1)
         cdef Bound bound
         bound.bound_value = gs_similarity + y_y_similarity + 2 * y_y_prime_similarity
         bound.real_value = gs_similarity
@@ -138,8 +139,8 @@ cdef class PeptideMinBoundCalculator(BoundCalculator):
         cdef int i, l, max_length, index_one, index_two
         cdef FLOAT64_t current_similarity, n_gram_similarity
         cdef FLOAT64_t similarity = 0.
-        for i in range(1, len(y)):
-            max_length = min(self.n, len(y) - i)
+        for i in range(1, len(y) - self.n_min + 1):
+            max_length = min(self.n_max, len(y) - i)
             current_similarity = 1.
             n_gram_similarity = 0.
             for l in range(max_length):
@@ -148,13 +149,13 @@ cdef class PeptideMinBoundCalculator(BoundCalculator):
                 current_similarity *= self.similarity_matrix[index_one, index_two]
                 n_gram_similarity += current_similarity
             similarity += self.position_matrix[0, i] * n_gram_similarity
-        return self.n + 2 * similarity
+        return self.n_max + 2 * similarity
 
     cdef FLOAT64_t compute_y_y_prime_bound(self, str y, int y_start_index):
         cdef numpy.ndarray[FLOAT64_t, ndim=2] similarity_matrix = numpy.asarray(self.similarity_matrix)
         cdef int i, n_gram_length
         cdef FLOAT64_t y_y_prime_bound = 0
-        for n_gram_length in range(1, self.n + 1):
+        for n_gram_length in range(self.n_min, self.n_max + 1):
             for i in range(y_start_index):
                 y_y_prime_bound += self.compute_n_gram_y_y_prime_bound(n_gram_length, i, y, y_start_index,
                                                                        similarity_matrix)

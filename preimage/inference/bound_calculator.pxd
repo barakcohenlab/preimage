@@ -20,7 +20,7 @@ cdef class BoundCalculator:
 cdef class MaxBoundCalculator(BoundCalculator):
     cdef:
         FLOAT64_t[:,::1] graph, graph_weights
-        int n
+        int n_max
         dict n_gram_to_index
 
 
@@ -35,7 +35,7 @@ cdef class OCRMinBoundCalculator(BoundCalculator):
 
 cdef class PeptideMinBoundCalculator(BoundCalculator):
     cdef:
-        int n
+        int n_max, n_min
         int alphabet_length
         dict letter_to_index
         FLOAT64_t[:,::1] similarity_matrix
