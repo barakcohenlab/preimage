@@ -9,6 +9,7 @@ from preimage.features.gs_similarity_feature_space import GenericStringSimilarit
 
 
 class StringMaximizationModel(BaseEstimator):
+    # max_time is in seconds
     def __init__(self, alphabet, n_max, gs_kernel, max_time, n_min=1):
         self._n_max = int(n_max)
         self._n_min = int(n_min)

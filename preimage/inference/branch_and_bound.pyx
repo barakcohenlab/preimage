@@ -14,8 +14,8 @@ ctypedef numpy.float64_t FLOAT64_t
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cpdef branch_and_bound(NodeCreator node_creator, int y_length, list alphabet, float max_time):
-    cdef float start_time = time.clock()
-    cdef float current_time = time.clock() - start_time
+    cdef float start_time = time.perf_time()
+    cdef float current_time = time.perf_time() - start_time
     cdef str empty_string = ""
     cdef MaxNode node, best_node
     cdef list heap = node_creator.get_start_nodes(y_length)
@@ -29,7 +29,7 @@ cpdef branch_and_bound(NodeCreator node_creator, int y_length, list alphabet, fl
         node = depth_first_search(node, best_node, node_creator, heap, y_length, y_length, alphabet)
         if node < best_node and len(node.y) == y_length:
             best_node = node
-        current_time = time.clock() - start_time
+        current_time = time.perf_time() - start_time
     return best_node.y, best_node.get_bound()
 
 
@@ -37,8 +37,8 @@ cpdef branch_and_bound(NodeCreator node_creator, int y_length, list alphabet, fl
 @cython.wraparound(False)
 cpdef branch_and_bound_no_length(NodeCreator node_creator, int min_length, int max_length, list alphabet,
                                  float max_time):
-    cdef float start_time = time.clock()
-    cdef float current_time = time.clock() - start_time
+    cdef float start_time = time.perf_time()
+    cdef float current_time = time.perf_time() - start_time
     cdef str empty_string = ""
     cdef MaxNode best_node
     cdef int key, length
@@ -52,12 +52,12 @@ cpdef branch_and_bound_no_length(NodeCreator node_creator, int min_length, int m
         keys_to_remove = []
         for length, heap in heaps.items():
             best_node = find_length_best_node(best_node, node_creator, heap, length, alphabet, keys_to_remove)
-            current_time = time.clock() - start_time
+            current_time = time.perf_time() - start_time
             if current_time > max_time:
                 break
         for key in keys_to_remove:
             heaps.pop(key)
-        current_time = time.clock() - start_time
+        current_time = time.perf_time() - start_time
     return best_node.y, best_node.get_bound()
 
 
@@ -99,8 +99,8 @@ cdef MaxNode find_length_best_node(MaxNode best_node, NodeCreator node_creator, 
 @cython.wraparound(False)
 cpdef branch_and_bound_multiple_solutions(NodeCreator node_creator, int y_length, int n_solutions, list alphabet,
                                           float max_time):
-    cdef float start_time = time.clock()
-    cdef float current_time = time.clock() - start_time
+    cdef float start_time = time.perf_time()
+    cdef float current_time = time.perf_time() - start_time
     cdef str empty_string = ""
     cdef MaxNode node, best_node
     cdef list node_heap = node_creator.get_start_nodes(y_length)
@@ -120,7 +120,7 @@ cpdef branch_and_bound_multiple_solutions(NodeCreator node_creator, int y_length
                                                       y_length, alphabet)
         elif len(node.y) == y_length:
             best_node = add_node_to_solution_heap(node, best_node, solution_heap, n_solutions)
-        current_time = time.clock() - start_time
+        current_time = time.perf_time() - start_time
     solutions, bounds = get_sorted_solutions_and_bounds(solution_heap)
     return solutions, bounds
 
