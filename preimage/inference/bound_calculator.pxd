@@ -1,7 +1,7 @@
-cimport numpy
+cimport numpy as np
 from node cimport MaxNode
 
-ctypedef numpy.float64_t FLOAT64_t
+ctypedef np.float64_t FLOAT64_t
 
 
 cdef struct Bound:
@@ -33,11 +33,9 @@ cdef class OCRMinBoundCalculator(BoundCalculator):
     cdef FLOAT64_t gs_similarity_new_n_gram(self, str y)
 
 
-cdef class PeptideMinBoundCalculator(BoundCalculator):
+cdef class MinBoundCalculator(BoundCalculator):
     cdef:
-        int n_max, n_min
         int alphabet_length
-        dict letter_to_index
         FLOAT64_t[:,::1] similarity_matrix
         FLOAT64_t[:,::1] position_matrix
         FLOAT64_t[::1] start_node_bound_values
@@ -48,14 +46,31 @@ cdef class PeptideMinBoundCalculator(BoundCalculator):
 
     cdef FLOAT64_t[::1] precompute_start_node_bounds(self, int final_length, list n_grams)
 
-    cdef FLOAT64_t gs_similarity_new_n_gram(self, str y)
-
     cdef FLOAT64_t compute_y_y_prime_bound(self, str y, int y_start_index)
 
-    cdef FLOAT64_t compute_n_gram_y_y_prime_bound(self, int n_gram_length, int n_gram_index, str y, int y_start_index,
-                                                  numpy.ndarray[FLOAT64_t, ndim=2] similarity_matrix)
 
-    cdef numpy.ndarray[FLOAT64_t, ndim=1] transform_letter_scores_in_n_gram_scores(self,
-                                                                                   numpy.ndarray[FLOAT64_t, ndim=1]
-                                                                                   letter_scores, int n_gram_length,
-                                                                                   int index_in_n_gram)
+cdef class PeptideMinBoundCalculator(MinBoundCalculator):
+    cdef:
+        int n_max, n_min
+        dict letter_to_index
+
+    cdef FLOAT64_t gs_similarity_new_n_gram(self, str y)
+
+    cdef FLOAT64_t compute_n_gram_y_y_prime_bound(self, int n_gram_length, int n_gram_index, str y, int y_start_index,
+                                                  np.ndarray[FLOAT64_t, ndim=2] similarity_matrix)
+
+    cdef np.ndarray[FLOAT64_t, ndim=1] transform_letter_scores_in_n_gram_scores(self,
+                                                                                np.ndarray[FLOAT64_t, ndim=1]
+                                                                                letter_scores, int n_gram_length,
+                                                                                int index_in_n_gram)
+
+
+cdef class DnaMinBoundCalculator(MinBoundCalculator):
+    cdef:
+        int n_gram_length
+        dict n_gram_to_index
+
+    cdef FLOAT64_t compute_n_gram_y_y_prime_bound(self, int n_gram_pos, str y, int y_start_index,
+                                                  np.ndarray[FLOAT64_t, ndim=2] similarity_matrix)
+
+    cdef FLOAT64_t gs_similarity_new_n_gram(self, str y)

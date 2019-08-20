@@ -1,10 +1,11 @@
 """Factory initializing bounds and node creator for the branch and bound search."""
 
-__author__ = 'amelie'
+__author__ = 'amelie, rfriedman22'
 
 import numpy as np
 
-from preimage.inference.bound_calculator import OCRMinBoundCalculator, MaxBoundCalculator, PeptideMinBoundCalculator
+from preimage.inference.bound_calculator import OCRMinBoundCalculator, MaxBoundCalculator, PeptideMinBoundCalculator,\
+    DnaMinBoundCalculator
 from preimage.inference.node_creator import NodeCreator
 from preimage.utils.position import compute_position_weights
 from preimage.utils.alphabet import get_n_gram_to_index, get_n_grams
@@ -76,7 +77,7 @@ def get_gs_node_creator(n, graph, graph_weights, y_length, n_gram_to_index, n_gr
     return node_creator
 
 
-def get_gs_similarity_node_creator(alphabet, n, graph, graph_weights, y_length, gs_kernel):
+def get_gs_similarity_node_creator(alphabet, n_max, graph, graph_weights, y_length, gs_kernel, n_min=1):
     """Create the bounds and the node creator for the branch and bound search of the generic string kernel.
 
     Takes in account the position and the n-gram penalties when comparing strings (sigma_p and sigma_c in the
@@ -86,8 +87,8 @@ def get_gs_similarity_node_creator(alphabet, n, graph, graph_weights, y_length, 
     ----------
     alphabet : list
         List of letters.
-    n : int
-        N-gram length.
+    n_max : int
+        Maximum n-gram length.
     graph : array, shape = [n_partitions, len(alphabet)**n]
         Array representation of the graph. graph[i, j] represents the maximum value of a string of length i + n ending
         with the jth n-gram.
@@ -97,16 +98,25 @@ def get_gs_similarity_node_creator(alphabet, n, graph, graph_weights, y_length, 
         Length of the string to predict.
     gs_kernel : GenericStringKernel
         Generic String Kernel with position and n-gram penalties.
+    n_min : int
+        Minimum n-gram length.
 
     Returns
     -------
     node_creator : NodeCreator
         Node creator for the branch and bound search instantiated with the generic string bounds
     """
-    n_gram_to_index = get_n_gram_to_index(alphabet, n)
+    n_gram_to_index = get_n_gram_to_index(alphabet, n_max)
     letter_to_index = get_n_gram_to_index(alphabet, 1)
-    n_grams = get_n_grams(alphabet, n)
-    min_bound = PeptideMinBoundCalculator(n, len(alphabet), n_grams, letter_to_index, y_length, gs_kernel)
-    max_bound = MaxBoundCalculator(n, graph, graph_weights, n_gram_to_index)
+    n_grams = get_n_grams(alphabet, n_max)
+    if gs_kernel.is_amino_acid():
+        min_bound = PeptideMinBoundCalculator(n_max, len(alphabet), n_grams, letter_to_index, y_length, gs_kernel,
+                                              n_min=n_min)
+    elif gs_kernel.is_dna_kmer():
+        min_bound = DnaMinBoundCalculator(n_max, len(alphabet), n_grams, n_gram_to_index, y_length, gs_kernel)
+    else:
+        raise NotImplementedError("Min bound calculator not implemented for this kernel.")
+
+    max_bound = MaxBoundCalculator(n_max, graph, graph_weights, n_gram_to_index)
     node_creator = NodeCreator(min_bound, max_bound, n_grams)
     return node_creator
