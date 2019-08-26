@@ -220,7 +220,7 @@ cdef class DnaMinBoundCalculator(MinBoundCalculator):
     def __init__(self, n_gram_length, alphabet_length, n_grams, n_gram_to_index, final_length, gs_kernel):
         self.n_gram_length = n_gram_length
         self.n_gram_to_index = n_gram_to_index
-        super(PeptideMinBoundCalculator, self).__init__(alphabet_length, n_grams, final_length, gs_kernel)
+        super(DnaMinBoundCalculator, self).__init__(alphabet_length, n_grams, final_length, gs_kernel)
 
     cdef FLOAT64_t[::1] precompute_y_y_bound_for_each_length(self, int max_length):
         cdef FLOAT64_t[::1] y_y_bounds = np.zeros(max_length, dtype=np.float64)
