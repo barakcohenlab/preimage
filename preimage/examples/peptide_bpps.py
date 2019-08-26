@@ -22,7 +22,7 @@ if __name__ == '__main__':
     max_time = 500
 
     print('String maximization model on BPPs dataset')
-    gs_kernel = GenericStringKernel(AminoAcidFile.blosum62_natural, sigma_position, sigma_amino_acid, n,
+    gs_kernel = GenericStringKernel(AminoAcidFile.blosum62_natural, sigma_position, sigma_amino_acid, n_max=n,
                                     is_normalized=True)
     alphabet = gs_kernel.alphabet
     dataset = load_bpps_dataset()
