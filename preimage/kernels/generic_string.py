@@ -118,8 +118,8 @@ class GenericStringKernel:
             distance_matrix = np.eye(len(self.alphabet))
             for row, ngram_one in enumerate(self.alphabet):
                 for col, ngram_two in enumerate(self.alphabet):
-                    if row != col and ngram_one == reverse_compliment(ngram_two):
-                        distance_matrix[row, col] = 1
+                    if ngram_one == reverse_compliment(ngram_two):
+                        distance_matrix[row, col] += 1
 
             self.distance_matrix = distance_matrix
 

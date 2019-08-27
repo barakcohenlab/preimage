@@ -88,20 +88,16 @@ cpdef FLOAT64_t[:,::1] compute_ngram_gs_similarity_weights(int n_partitions, INT
 
     for partition_index in range(n_partitions):
         for n_gram_index, n_gram in enumerate(n_grams):
-            if partition_index < n_partitions - 1:
-                n_gram_weight = 0.0
-                for y_index, y in enumerate(Y):
-                    kernel = 0.0
-                    y_length = y_lengths[y_index]
-                    for i in range(y_length):
-                        # Compare each n-gram of y with this n-gram, and weight it by the positional similarity
-                        kernel += position_matrix[partition_index, i] * similarity_matrix[n_gram_index, y[i]]
-                    # Multiply the total similarity to y by the model weight of y, and add that to the n-gram weight
-                    n_gram_weight += y_weights[y_index] * kernel
-                # The edge weight is now the similarity of this n-gram to all strings in Y, weighted by the model weights of Y
-                gs_weights[partition_index, n_gram_index] = n_gram_weight
-            else:
-                # Since n_min == n_max, there is no additional contribution from the final edge.
-                gs_weights[partition_index, n_gram_index] = 0.0
+            n_gram_weight = 0.0
+            for y_index, y in enumerate(Y):
+                kernel = 0.0
+                y_length = y_lengths[y_index]
+                for i in range(y_length):
+                    # Compare each n-gram of y with this n-gram, and weight it by the positional similarity
+                    kernel += position_matrix[partition_index, i] * similarity_matrix[n_gram_index, y[i]]
+                # Multiply the total similarity to y by the model weight of y, and add that to the n-gram weight
+                n_gram_weight += y_weights[y_index] * kernel
+            # The edge weight is now the similarity of this n-gram to all strings in Y, weighted by the model weights of Y
+            gs_weights[partition_index, n_gram_index] = n_gram_weight
 
     return gs_weights
