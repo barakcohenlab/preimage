@@ -29,6 +29,7 @@ class StringMaximizationModel(BaseEstimator):
         self._node_creator_ = get_gs_similarity_node_creator(self._alphabet, self._n_max, graph, gs_weights, y_length,
                                                              self._gs_kernel)
         self._y_length_ = y_length
+        return graph
 
     def predict(self, n_predictions):
         strings, bounds = branch_and_bound_multiple_solutions(self._node_creator_, self._y_length_, n_predictions,
