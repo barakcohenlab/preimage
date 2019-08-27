@@ -106,6 +106,7 @@ cpdef element_wise_generic_string_kernel_with_sigma_c(INT8_t[:,::1] X, INT64_t[:
     return np.asarray(kernel)
 
 
+@cython.boundscheck(False)
 @cython.wraparound(False)
 cpdef generic_string_ngram_kernel_with_sigma_c(INT64_t[:, ::1] X1, INT64_t[::1] x1_lengths, INT64_t[:, ::1] X2,
                                                INT64_t[::1] x2_lengths, FLOAT64_t[:, ::1] position_matrix,
@@ -135,6 +136,7 @@ cpdef generic_string_ngram_kernel_with_sigma_c(INT64_t[:, ::1] X1, INT64_t[::1] 
     return np.asarray(gram_matrix)
 
 
+@cython.boundscheck(False)
 @cython.wraparound(False)
 cdef inline FLOAT64_t generic_string_ngram_kernel_similarity_with_sigma_c(INT64_t[::1] x1, INT64_t x1_length,
                                                                           INT64_t[::1] x2, INT64_t x2_length,
@@ -154,6 +156,7 @@ cdef inline FLOAT64_t generic_string_ngram_kernel_similarity_with_sigma_c(INT64_
     return similarity
 
 
+@cython.boundscheck(False)
 @cython.wraparound(False)
 cpdef element_wise_generic_string_ngram_kernel_with_sigma_c(INT64_t[:, ::1] X, INT64_t[::1] x_lengths,
                                                             FLOAT64_t[:, ::1] position_matrix,

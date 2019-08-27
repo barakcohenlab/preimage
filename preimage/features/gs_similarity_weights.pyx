@@ -74,6 +74,7 @@ cdef FLOAT64_t compute_last_n_gram_weight(int partition_index, INT8_t[::1] n_gra
     return n_gram_weight
 
 
+@cython.boundscheck(False)
 @cython.wraparound(False)
 cpdef FLOAT64_t[:,::1] compute_ngram_gs_similarity_weights(int n_partitions, INT64_t[:,::1] n_grams, INT64_t[:,::1] Y,
                                                            FLOAT64_t[::1] y_weights, INT64_t[::1] y_lengths,
@@ -82,7 +83,7 @@ cpdef FLOAT64_t[:,::1] compute_ngram_gs_similarity_weights(int n_partitions, INT
     """Implementation of DAG edge weights when n_min == n_max and strings are pre-computed to n-grams."""
     cdef int partition_index, n_gram_index, y_index, i
     cdef INT64_t y_length
-    cdef INT64_t[::1] n_gram
+    cdef INT64_t[::1] n_gram, y
     cdef FLOAT64_t kernel, n_gram_weight
     cdef FLOAT64_t[:, ::1] gs_weights = np.empty((n_partitions, n_grams.shape[0]))
 
