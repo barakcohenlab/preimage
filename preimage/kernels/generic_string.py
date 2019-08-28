@@ -114,11 +114,12 @@ class GenericStringKernel:
 
             self.properties_file_name = properties_file_name
             self.alphabet = get_n_grams(Alphabet.dna, n_max)
+            rc_dict = {i: reverse_compliment(i) for i in self.alphabet}
             # Set the distance matrix to the identity matrix, then fill in any off-diagonals for reverse compliments
             distance_matrix = np.eye(len(self.alphabet))
             for row, ngram_one in enumerate(self.alphabet):
                 for col, ngram_two in enumerate(self.alphabet):
-                    if ngram_one == reverse_compliment(ngram_two):
+                    if ngram_one == rc_dict[ngram_one]:
                         distance_matrix[row, col] += 1
 
             self.distance_matrix = distance_matrix
