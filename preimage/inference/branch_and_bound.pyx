@@ -1,6 +1,7 @@
 import cython
 import heapq
 import time
+from libc.limits cimport INT_MAX
 
 import numpy
 cimport numpy
@@ -107,6 +108,9 @@ cpdef branch_and_bound_multiple_solutions(NodeCreator node_creator, int y_length
     cdef list solution_heap = []
     cdef list solutions, bounds
     cdef int max_depth = y_length - 1
+
+    if n_solutions <= 0:
+        n_solutions = INT_MAX
 
     heapq.heapify(node_heap)
     best_node = MaxNode(empty_string, -150, 0, 0)
