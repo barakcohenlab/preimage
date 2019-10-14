@@ -1,4 +1,5 @@
 import cython
+from cython.parallel import prange
 import numpy as np
 cimport numpy as np
 from cpython cimport bool
@@ -112,11 +113,11 @@ cpdef generic_string_ngram_kernel_with_sigma_c(INT64_t[:, ::1] X1, INT64_t[::1] 
                                                INT64_t[::1] x2_lengths, FLOAT64_t[:, ::1] position_matrix,
                                                FLOAT64_t[:, ::1] similarity_matrix, bool symmetric):
     """Implementation of the GS kernel when n_min == n_max and strings are pre-computed to n-grams with a sliding window."""
-    cdef int i, j
+    cdef int i, j, id
     cdef FLOAT64_t[:, ::1] gram_matrix = np.zeros((X1.shape[0], X2.shape[0]), dtype=np.float64)
 
     if symmetric:
-        for i in range(X1.shape[0]):
+        for i in prange(X1.shape[0], nogil=True, schedule="static"):
             gram_matrix[i, i] = generic_string_ngram_kernel_similarity_with_sigma_c(X1[i], x1_lengths[i], X2[i],
                                                                                     x2_lengths[i], position_matrix,
                                                                                     similarity_matrix)
@@ -127,7 +128,7 @@ cpdef generic_string_ngram_kernel_with_sigma_c(INT64_t[:, ::1] X1, INT64_t[::1] 
                 gram_matrix[j, i] = gram_matrix[i, j]
 
     else:
-        for i in range(X1.shape[0]):
+        for i in prange(X1.shape[0], nogil=True, schedule="static"):
             for j in range(X2.shape[0]):
                 gram_matrix[i, j] = generic_string_ngram_kernel_similarity_with_sigma_c(X1[i], x1_lengths[i], X2[j],
                                                                                         x2_lengths[j], position_matrix,
@@ -141,7 +142,7 @@ cpdef generic_string_ngram_kernel_with_sigma_c(INT64_t[:, ::1] X1, INT64_t[::1] 
 cdef inline FLOAT64_t generic_string_ngram_kernel_similarity_with_sigma_c(INT64_t[::1] x1, INT64_t x1_length,
                                                                           INT64_t[::1] x2, INT64_t x2_length,
                                                                           FLOAT64_t[:, ::1] position_matrix,
-                                                                          FLOAT64_t[:, ::1] similarity_matrix):
+                                                                          FLOAT64_t[:, ::1] similarity_matrix) nogil:
     """Implementation of GS kernel similarity for two strings when n_min == n_max and strings are pre-computed to n-grams."""
     cdef INT64_t i, j
     cdef FLOAT64_t similarity
@@ -164,7 +165,7 @@ cpdef element_wise_generic_string_ngram_kernel_with_sigma_c(INT64_t[:, ::1] X, I
     """Implementation of GS kernel self-similarity when n_min == n_max and strings are pre-computed to n-grams."""
     cdef int i
     cdef FLOAT64_t[::1] kernel = np.empty(X.shape[0], dtype=np.float64)
-    for i in range(X.shape[0]):
+    for i in prange(X.shape[0], nogil=True, schedule="static"):
         kernel[i] = generic_string_ngram_kernel_similarity_with_sigma_c(X[i], x_lengths[i], X[i], x_lengths[i],
                                                                         position_matrix, similarity_matrix)
 
