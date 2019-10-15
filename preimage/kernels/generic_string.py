@@ -73,8 +73,6 @@ class GenericStringKernel:
         Unique members of the alphabet, each item is a string.
     distance_matrix : matrix-like
         Squared Euclidean distance between the properties of every alphabet member with every other alphabet member.
-    gram_matrix : matrix-like
-        The result of __call__, corresponding to the Gram matrix of all given data. Initialized as None.
 
     Notes
     -----
@@ -144,7 +142,6 @@ class GenericStringKernel:
         self.n_min = n_min
         self.n_max = n_max
         self.is_normalized = is_normalized
-        self.gram_matrix = None
 
     def __call__(self, X1, X2):
         """Compute the similarity of all the strings of X1 with all the strings of X2 in the Generic String Kernel.
@@ -192,7 +189,6 @@ class GenericStringKernel:
         gram_matrix = c_fun(X1_int, X2_int)
         print("Normalizing the Gram matrix. FIXME get rid of this eventually.")
         gram_matrix = self._normalize(gram_matrix, X1_int, x1_lengths, X2_int, x2_lengths, is_symmetric, c_norm_fun)
-        self.gram_matrix = gram_matrix
         return gram_matrix
 
     def get_position_matrix(self, max_length):
@@ -319,11 +315,13 @@ class GenericStringKernel:
 
         return kernel
 
-    def save_gram_lower_triangle(self, filename, delim="\t"):
+    def save_gram_lower_triangle(self, gram_matrix, filename, delim="\t"):
         """Save the lower triangle of the Gram matrix to file. Assumes the matrix is symmetric.
 
         Parameters
         ----------
+        gram_matrix : matrix-like
+            The Gram matrix computed by this kernel.
         filename : str
             Name of the file to write.
         delim : str
@@ -333,18 +331,18 @@ class GenericStringKernel:
         -------
         self
         """
-        if self.gram_matrix.shape[0] != self.gram_matrix.shape[1]:
+        if gram_matrix.shape[0] != gram_matrix.shape[1]:
             raise ValueError("Gram matrix is not symmetric, cannot take lower triangle.")
 
         out_str = ""
-        for row in range(self.gram_matrix.shape[0]):
-            out_str += delim.join([f"{i:1.6e}" for i in self.gram_matrix[row, :row + 1]]) + "\n"
+        for row in range(gram_matrix.shape[0]):
+            out_str += delim.join([f"{i:1.6e}" for i in gram_matrix[row, :row + 1]]) + "\n"
         with open(filename, "w") as fout:
             fout.write(out_str)
         return self
 
     def set_gram_matrix_from_file(self, filename, delim="\t", lower_triangle=True):
-        """Read in a precomputed Gram matrix from a file.
+        """Read in a precomputed Gram matrix from a file and return the matrix.
 
         Parameters
         ----------
@@ -358,7 +356,8 @@ class GenericStringKernel:
 
         Returns
         -------
-        self
+        gram_matrix : matrix-like
+            Dense representation of the Gram matrix.
         """
         if lower_triangle:
             # First get the number of lines
@@ -377,14 +376,12 @@ class GenericStringKernel:
                             gram_matrix[row, col] = val
                             gram_matrix[col, row] = val
 
-            self.gram_matrix = gram_matrix
-
         else:
-            self.gram_matrix = np.genfromtxt(filename, delimiter=delim)
+            gram_matrix = np.genfromtxt(filename, delimiter=delim)
 
-        return self
+        return gram_matrix
 
-    def get_sub_matrix(self, row_idx, col_idx):
+    def get_sub_matrix(self, row_idx, col_idx, gram_matrix):
         """Get a sub-Gram matrix. If row_idx is not the same as col_idx, then the rows should represent new data (
         i.e. test data) while columns represent the original, known training data. Raises an Error if the Gram matrix
         is not already computed.
@@ -395,16 +392,15 @@ class GenericStringKernel:
             Indices of the rows to extract from the Gram matrix.
         col_idx : list-like
             Indices of the columns to extract from the Gram matrix.
+        gram_matrix : matrix-like
+            Dense representation of the Gram matrix.
 
         Returns
         -------
         sub_mat : 2D ndarray
             The contents of the sub-Gram matrix
         """
-        if self.gram_matrix is None:
-            raise AttributeError("Gram matrix has not been computed.")
-        else:
-            sub_mat = self.gram_matrix[np.ix_(row_idx, col_idx)]
+        sub_mat = gram_matrix[np.ix_(row_idx, col_idx)]
         return sub_mat
 
     def is_dna_kmer(self):
