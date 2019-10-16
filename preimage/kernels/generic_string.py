@@ -187,7 +187,6 @@ class GenericStringKernel:
             raise NotImplementedError("Kernel computation not implemented for this version!")
 
         gram_matrix = c_fun(X1_int, X2_int)
-        print("Normalizing the Gram matrix. FIXME get rid of this eventually.")
         gram_matrix = self._normalize(gram_matrix, X1_int, x1_lengths, X2_int, x2_lengths, is_symmetric, c_norm_fun)
         return gram_matrix
 

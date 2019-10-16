@@ -134,7 +134,6 @@ cpdef generic_string_ngram_kernel_with_sigma_c(INT64_t[:, ::1] X1, INT64_t[::1] 
                                                                                         x2_lengths[j], position_matrix,
                                                                                         similarity_matrix)
 
-    print("Converting Gram matrix to ndarray. FIXME get rid of this eventually.")
     return np.asarray(gram_matrix)
 
 
