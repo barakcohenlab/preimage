@@ -369,7 +369,7 @@ class GenericStringKernel:
             gram_matrix = np.eye(n_lines)
             with open(filename) as fin:
                 for row, line in enumerate(fin):
-                    line = map(float, line.split(delim))
+                    line = map(float, line.strip().split(delim))
                     for col, val in enumerate(line):
                         if row != col:
                             gram_matrix[row, col] = val

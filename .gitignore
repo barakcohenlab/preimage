@@ -61,3 +61,6 @@ target/
 
 # Jupyter checkpoints
 *.ipynb_checkpoints/
+
+# Misc
+*.c
