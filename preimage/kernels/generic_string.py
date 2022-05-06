@@ -260,7 +260,7 @@ class GenericStringKernel:
             else:
                 x1_norm = c_norm_fun(X1, x1_lengths)
                 x2_norm = c_norm_fun(X2, x2_lengths)
-            gram_matrix = ((gram_matrix / np.sqrt(x2_norm)).T / np.sqrt(x1_norm)).T
+            gram_matrix = gram_matrix / np.sqrt(x2_norm) / np.sqrt(x1_norm[:, np.newaxis])
         return gram_matrix
 
     def transform(self, x):
